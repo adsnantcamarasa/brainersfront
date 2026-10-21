@@ -1,0 +1,12 @@
+<div class="flex flex-col gap-6">
+  <a hlmBtn variant="ghost" size="sm" routerLink="/" class="self-start">
+    <ng-icon name="lucideArrowLeft" aria-hidden="true" />
+    Retour aux notes
+  </a>
+
+  <h1 class="text-2xl font-semibold tracking-tight">Nouvelle note</h1>
+
+  <!-- (saved) / (cancelled) : on écoute les événements émis par le formulaire.
+       $event contient la note créée. -->
+  <app-note-form (saved)="openNote($event)" (cancelled)="goHome()" />
+</div>

@@ -1,10 +1,10 @@
 # Brainers front — le guide
 
-> **Angular 22 · Spartan UI 1.8 · Tailwind v4 · Vitest** · branché sur ton back `demo/` (commit `3fe1664`)
+> **Angular 22 · Spartan UI 1.8 · Tailwind v4 · Vitest** · branché sur ton back `demo/` (repo `brainers`, commit `32561ba`)
 > Ce guide accompagne le code du dossier `front/`. Le code est commenté ; le guide explique **pourquoi** il est écrit comme ça, et **comment on y arrive**.
 
-**Ce qui a été vérifié :** le build de production passe, les **26 tests unitaires** passent (couverture 100 % du code applicatif, seuil fixé à 80 %), et un **parcours complet dans un vrai navigateur** (23 vérifications : délai de recherche, 10 résultats max, 409, 404, mobile…) passe contre un faux back qui reproduit exactement ton contrat (mêmes routes, même JSON, mêmes erreurs, lus dans ton code).
-**Ce qui n'a pas pu l'être :** ton vrai back Spring n'a pas tourné de mon côté (l'accès à Maven Central est bloqué dans mon environnement). Le premier lancement chez toi est donc le vrai test d'intégration.
+**Ce qui a été vérifié :** le build de production passe, les **42 tests unitaires** passent (couverture 100 % du code applicatif, seuil fixé à 80 %), et un **parcours complet dans un vrai navigateur** (24 vérifications : recherche au clic, 10 résultats max, modification, suppression avec confirmation, 409, 404, mobile…) passe **contre ton vrai back Spring** (`demo/`, commit `32561ba`), lancé avec `./mvnw spring-boot:run`.
+**À savoir :** modifier une note avec un titre déjà pris renvoie aujourd'hui une erreur 500 du back, pas un 409. Le front affiche alors « erreur serveur ». La correction est côté back (voir 4.6, point 5).
 
 ---
 
@@ -28,17 +28,17 @@
 
 | Écran | URL | Ce qu'on y fait |
 | :--- | :--- | :--- |
-| Accueil, onglet **Rechercher** | `/` | Taper un mot du titre → après 300 ms sans frappe, 10 résultats max s'affichent sous la barre |
-| Accueil, onglet **Créer une note** | `/` | Formulaire titre + contenu, obligatoires, validés avant envoi |
-| **Détail** d'une note | `/notes/:id` | Titre, contenu, dates. « Note introuvable » si elle n'existe pas |
+| **Accueil** | `/` | Une barre de recherche, et en dessous **Rechercher** et **Créer**. Taper un mot du titre puis « Rechercher » (ou Entrée) → 10 résultats max sous la barre. Champ vide → toutes les notes |
+| **Nouvelle note** | `/notes/new` | Formulaire titre + contenu, obligatoires, validés avant envoi |
+| **Détail** d'une note | `/notes/:id` | Titre, contenu, dates, et deux options : **Modifier** (formulaire pré-rempli) ou **Supprimer** (avec confirmation). « Note introuvable » si elle n'existe pas |
 
-| Recherche | Formulaire (erreurs) | Titre déjà pris (409) |
+| Recherche | Détail | Modification |
 | :---: | :---: | :---: |
-| ![Recherche](docs/captures/02-recherche-java.png) | ![Erreurs](docs/captures/06-formulaire-erreurs.png) | ![409](docs/captures/07-formulaire-409.png) |
+| ![Recherche](docs/captures/02-recherche-java.png) | ![Détail](docs/captures/05-detail.png) | ![Modification](docs/captures/08-modification.png) |
 
-| Détail | Introuvable | Mobile |
+| Suppression | Titre déjà pris (409) | Mobile |
 | :---: | :---: | :---: |
-| ![Détail](docs/captures/10-note-creee.png) | ![Introuvable](docs/captures/11-introuvable.png) | ![Mobile](docs/captures/12-mobile.png) |
+| ![Suppression](docs/captures/09-suppression.png) | ![409](docs/captures/07-formulaire-409.png) | ![Mobile](docs/captures/12-mobile.png) |
 
 Toutes les captures sont dans `docs/captures/`.
 
@@ -76,34 +76,38 @@ Les étapes 5 et 6 sont celles qu'on oublie, et ce sont celles qui font la diff�
 
 ### 1.2 Appliquée à Brainers
 
-**Étape 1 → 2 : besoins → écrans.** Tu as demandé : rechercher, créer, afficher. Ça donne deux écrans : une page d'accueil (rechercher **ou** créer, deux onglets) et une page de détail.
+**Étape 1 → 2 : besoins → écrans.** Tu as demandé : rechercher, créer, afficher, puis modifier et supprimer. Ça donne trois écrans : une page d'accueil (une seule barre de recherche, avec « Rechercher » et « Créer »), une page de création, et une page de détail où l'on peut modifier ou supprimer la note.
 
 **Étape 3 : écrans → routes.**
 
 | Écran | Route | Pourquoi une URL à part ? |
 | :--- | :--- | :--- |
 | Accueil | `/` | Point d'entrée |
+| Nouvelle note | `/notes/new` | « Créer » est un simple lien : le formulaire a son adresse, et le bouton « précédent » du navigateur ramène à l'accueil |
 | Détail | `/notes/:id` | Une note doit avoir une **adresse** : on peut la mettre en favori, la partager, revenir en arrière avec le navigateur |
 
-Les onglets n'ont **pas** d'URL : ce sont deux vues du même écran. Créer une route `/notes/new` aurait aussi été valable (voir 1.3).
+La modification et la confirmation de suppression n'ont **pas** d'URL : ce sont deux modes de la page de détail (voir 3.10). Une route `/notes/:id/edit` aurait aussi été valable (voir 1.3).
 
 **Étape 4 : écrans → composants.**
 
 ```text
  App  (la coquille : en-tête + <router-outlet>)
   │
-  ├── "/"  HomePage ─────────────── la page : assemble et orchestre
-  │         ├── NoteSearch ─────────── la barre + la recherche (appelle le back)
-  │         │     └── NoteList ──────── affiche une liste (n'appelle rien)
-  │         └── NoteCreateForm ─────── le formulaire (appelle le back)
+  ├── "/"  HomePage ─────────────── la page : assemble (et ajoute le lien « Créer »)
+  │         └── NoteSearch ─────────── la barre + « Rechercher » (appelle le back)
+  │               └── NoteList ──────── affiche une liste (n'appelle rien)
   │
-  └── "/notes/:id"  NoteDetailPage ── la page de détail (appelle le back)
+  ├── "/notes/new"  NoteCreatePage ── la page de création : décide de la suite
+  │         └── NoteForm ───────────── le formulaire (appelle le back)
+  │
+  └── "/notes/:id"  NoteDetailPage ── la note, « Modifier », « Supprimer » (appelle le back)
+            └── NoteForm ───────────── le MÊME formulaire, pré-rempli avec la note
 ```
 
 Comment décider où couper ? Deux questions :
 
-1. **Ce morceau a-t-il une responsabilité à lui ?** La recherche et la création sont deux métiers différents → deux composants.
-2. **Ce morceau pourrait-il servir ailleurs ?** La liste de notes pourrait s'afficher sur une autre page → composant à part, qui ne fait **qu'afficher**.
+1. **Ce morceau a-t-il une responsabilité à lui ?** La recherche et la saisie d'une note sont deux métiers différents → deux composants.
+2. **Ce morceau pourrait-il servir ailleurs ?** Le formulaire sert deux fois : pour créer et pour modifier. La liste de notes pourrait s'afficher sur une autre page → composant à part, qui ne fait **qu'afficher**.
 
 **Étape 5 : les données.**
 
@@ -114,13 +118,14 @@ Comment décider où couper ? Deux questions :
 
 | Écran | États possibles |
 | :--- | :--- |
-| Recherche | champ vide · recherche en cours · résultats · aucun résultat · erreur |
-| Formulaire | invalide · valide · envoi en cours · titre déjà pris (409) · erreur serveur |
-| Détail | chargement · note affichée · introuvable (404) · erreur |
+| Recherche | rien cherché · recherche en cours · résultats · aucun résultat · erreur |
+| Formulaire | invalide · valide · envoi en cours · titre déjà pris (409) · note disparue (404) · erreur serveur |
+| Détail : la note | chargement · note affichée · introuvable (404) · erreur |
+| Détail : l'action | lecture · modification · confirmation de suppression · suppression en cours · suppression échouée |
 
 Chacun de ces états a son affichage dans le template, et la plupart ont leur test (section 7).
 
-**Étape 7 : le style.** Spartan UI fournit les briques (onglets, champ, bouton, carte…). Tailwind gère la mise en page.
+**Étape 7 : le style.** Spartan UI fournit les briques (champ, bouton, carte…). Tailwind gère la mise en page.
 
 ### 1.3 Les décisions et leurs alternatives
 
@@ -128,8 +133,12 @@ Chacun de ces états a son affichage dans le template, et la plupart ont leur te
 | :--- | :--- | :--- |
 | Recherche faite **par le back** (`GET /notes?title=`) | Charger toutes les notes et filtrer dans le front | La règle de recherche (RG6) vit à un seul endroit, et ça tient la charge avec 10 000 notes. Ton back avait déjà la route. |
 | Limite de **10 résultats** appliquée dans le front | La limite dans le back (`findTop10By…`) | Ton back renvoie tous les résultats. Le front coupe à 10 et affiche « 10 premiers résultats sur 15 ». Idéalement, la limite descend dans le back (voir 4.6). |
-| **Onglets** sur la page d'accueil | Une route `/notes/new` pour le formulaire | Tu voulais « une page principale où je peux soit rechercher, soit créer ». Les deux onglets gardent leur état quand on passe de l'un à l'autre. |
+| Recherche **au clic** sur « Rechercher » | Recherche à chaque frappe, après 300 ms sans frappe | Tu voulais un bouton « Rechercher » : la recherche part quand tu le décides. Un champ vide liste toutes les notes. La variante « pendant la frappe » est décrite en 3.8. |
+| **Créer** = un lien vers `/notes/new` | Deux onglets Rechercher / Créer sur l'accueil | Une seule barre en haut et deux boutons : plus simple à lire. La page de création a son adresse. |
+| **Un seul formulaire** pour créer et modifier | Deux formulaires | Mêmes champs, mêmes règles : un seul endroit à maintenir. Il reçoit la note à modifier par un `input()`. |
+| Modifier et supprimer **dans la page de détail** | Une route `/notes/:id/edit` ; une fenêtre de confirmation (`alert-dialog` de Spartan) | Moins d'écrans. La confirmation tient dans le pied de la carte, sans composant Spartan de plus. |
 | Après création → **page de détail** | Rester sur le formulaire avec un message | C'est ton US-01 (critère 1). |
+| Après suppression → **accueil** | Rester sur la page avec « Note supprimée » | La note n'existe plus : sa page n'a plus de raison d'être. |
 | **Proxy** de développement | Configurer CORS dans Spring | Zéro modification du back, et c'est l'approche standard d'Angular (voir 4.2). |
 | Un **type d'état** par écran (`'loading' \| 'success' \| …`) | Plusieurs booléens (`loading`, `error`, `notFound`…) | Avec des booléens, on peut se retrouver avec `loading` ET `error` à `true`. Avec un type d'état, un seul état existe à la fois (voir 3.10). |
 | `NoteList` séparé de `NoteSearch` | Tout dans `NoteSearch` | Séparer « chercher » et « afficher » : la liste est réutilisable et testable seule. |
@@ -146,7 +155,7 @@ front/
 ├── angular.json                 configuration du CLI (build, serve, test)
 ├── components.json              configuration de Spartan (où il copie ses composants)
 ├── libs/ui/                     composants Spartan copiés dans TON projet (modifiables)
-│   ├── button/  input/  field/  tabs/  card/  …
+│   ├── button/  input/  field/  card/  …
 │   └── utils/                   fonction utilitaire de fusion des classes Tailwind
 └── src/
     ├── index.html               LA seule page HTML (Angular remplit <app-root>)
@@ -164,11 +173,12 @@ front/
         │   │   └── note-api.ts        LE service HTTP
         │   ├── pages/                 composants liés à une URL
         │   │   ├── home-page/
+        │   │   ├── note-create-page/
         │   │   └── note-detail-page/
         │   └── components/            morceaux d'écran
         │       ├── note-search/
         │       ├── note-list/
-        │       └── note-create-form/
+        │       └── note-form/
         └── shared/
             └── validators/            validateurs réutilisables par toute l'app
 ```
@@ -178,10 +188,10 @@ front/
 ### 2.2 Qui a le droit d'appeler qui
 
 ```text
-   pages/           (HomePage, NoteDetailPage)
+   pages/           (HomePage, NoteCreatePage, NoteDetailPage)
      │  utilisent
      ▼
-   components/      (NoteSearch, NoteCreateForm, NoteList)
+   components/      (NoteSearch, NoteForm, NoteList)
      │  utilisent
      ▼
    data/            (NoteApi, Note, NOTE_RULES)
@@ -191,7 +201,7 @@ front/
 ```
 
 - On descend, on ne remonte **jamais** : `data/` ne connaît aucun composant.
-- Une page peut aussi utiliser `data/` directement : `NoteDetailPage` appelle `NoteApi` sans passer par un composant.
+- Une page peut aussi utiliser `data/` directement : `NoteDetailPage` appelle `NoteApi` (chargement, suppression) sans passer par un composant.
 - Un composant ne parle jamais directement à `HttpClient` : il passe par `NoteApi`.
 - Pour prévenir un parent, un enfant **émet un événement** (`output()`), il ne l'appelle pas.
 
@@ -243,7 +253,7 @@ Chaque brique : d'abord le concept seul, puis où elle est utilisée dans Braine
 - `imports` : tout ce que le template utilise (autres composants, directives Spartan, pipes). Si tu l'oublies, Angular refuse de compiler : il ne connaît pas la balise.
 - Les composants sont **standalone** (pas de `NgModule`) : c'est la norme depuis Angular 17. Si tu vois des `@NgModule` à l'ADSN, c'est l'ancienne manière.
 
-**Dans Brainers.** 6 composants : `App`, `HomePage`, `NoteDetailPage`, `NoteSearch`, `NoteList`, `NoteCreateForm`.
+**Dans Brainers.** 7 composants : `App`, `HomePage`, `NoteCreatePage`, `NoteDetailPage`, `NoteSearch`, `NoteList`, `NoteForm`.
 
 > **Conventions Angular 22.** Le CLI génère `note-list.ts` avec la classe `NoteList`. Dans les projets plus anciens (et sans doute à l'ADSN), tu verras `note-list.component.ts` avec `NoteListComponent` : c'est le même principe, seul le nom change (option `--file-name-style-guide=2016` de `ng new`).
 
@@ -255,7 +265,7 @@ Chaque brique : d'abord le concept seul, puis où elle est utilisée dans Braine
 | :--- | :--- | :--- |
 | `{{ expr }}` | Afficher une valeur | `{{ current.note.title }}` |
 | `[prop]="expr"` | Donner une valeur à une propriété (sens classe → template) | `[notes]="current.notes"`, `[disabled]="form.invalid"` |
-| `(event)="action()"` | Réagir à un événement (sens template → classe) | `(click)="clear()"`, `(created)="openNote($event)"` |
+| `(event)="action()"` | Réagir à un événement (sens template → classe) | `(click)="cancel()"`, `(saved)="openNote($event)"` |
 | `[formControl]`, `formControlName` | Relier un champ à un contrôle de formulaire | `formControlName="title"` |
 
 Et le **contrôle de flux** :
@@ -302,21 +312,37 @@ protected readonly result = toSignal(observableDeResultats, { initialValue: IDLE
                  ┌──────────────────────────────┐
                  │ PARENT                       │
                  │                              │
-   [notes]="…"   │                 (created)="openNote($event)"
+   [notes]="…"   │                 (saved)="openNote($event)"
    données ▼     │                        ▲ événement
  ┌───────────────┴──┐            ┌────────┴─────────────┐
- │ NoteList         │            │ NoteCreateForm       │
- │ notes = input()  │            │ created = output()   │
- │                  │            │ created.emit(note)   │
+ │ NoteList         │            │ NoteForm             │
+ │ notes = input()  │            │ saved = output()     │
+ │                  │            │ saved.emit(note)     │
  └──────────────────┘            └──────────────────────┘
 ```
 
 **Dans Brainers :**
 
 - `NoteSearch` passe les notes trouvées à `NoteList` : `<app-note-list [notes]="current.notes" />`.
-- `NoteCreateForm` émet la note créée ; `HomePage` écoute et navigue : `<app-note-create-form (created)="openNote($event)" />`.
+- `NoteForm` émet la note enregistrée ; `NoteCreatePage` écoute et navigue : `<app-note-form (saved)="openNote($event)" (cancelled)="goHome()" />`.
+- `NoteDetailPage` donne au formulaire la note à modifier, **et** écoute ses événements : `<app-note-form [note]="current.note" (saved)="onSaved($event)" (cancelled)="backToReading()" />`.
 
-**Pourquoi le formulaire ne navigue pas lui-même ?** Parce que « que faire après la création » est une décision de **page**. Si demain tu réutilises ce formulaire dans une fenêtre modale, il ne faudra pas naviguer, juste fermer la fenêtre. Le formulaire, lui, ne change pas.
+**Pourquoi le formulaire ne navigue pas lui-même ?** Parce que « que faire après l'enregistrement » est une décision de **page**. C'est exactement ce qui se passe ici : après une création, `NoteCreatePage` ouvre la note ; après une modification, `NoteDetailPage` repasse simplement en lecture. Le formulaire, lui, est le même.
+
+**Une troisième voie : `<ng-content />`, la projection de contenu.** Le parent peut aussi passer du **HTML** à un enfant, en l'écrivant entre ses balises. Le bouton « Créer » est placé ainsi à côté de « Rechercher » :
+
+```html
+<!-- home-page.html : le parent écrit le lien entre les balises -->
+<app-note-search>
+  <a hlmBtn variant="outline" routerLink="/notes/new">Créer</a>
+</app-note-search>
+
+<!-- note-search.html : l'enfant choisit où ce contenu s'affiche -->
+<button hlmBtn type="submit">Rechercher</button>
+<ng-content />
+```
+
+Résultat : `NoteSearch` reste un composant de **recherche**, il ne sait rien de la création. C'est la page qui décide d'ajouter « Créer » à côté.
 
 ### 3.5 Les services et l'injection de dépendances
 
@@ -336,7 +362,7 @@ private readonly noteApi = inject(NoteApi);
 
 `inject()` remplace l'injection par constructeur (qui marche aussi). On l'utilise dans la déclaration des champs, comme ici.
 
-**Dans Brainers.** `NoteApi` est le seul service. Les composants injectent aussi des services fournis par Angular : `Router`, `ActivatedRoute`, `NonNullableFormBuilder`, `HttpClient` (dans `NoteApi`).
+**Dans Brainers.** `NoteApi` est le seul service : `searchByTitle`, `getById`, `create`, `update`, `delete`, une méthode par route du back. Les composants injectent aussi des services fournis par Angular : `Router`, `ActivatedRoute`, `NonNullableFormBuilder`, `HttpClient` (dans `NoteApi`).
 
 ### 3.6 Le routeur
 
@@ -347,6 +373,7 @@ private readonly noteApi = inject(NoteApi);
    │
    ▼  le routeur parcourt app.routes.ts dans l'ordre
    { path: '', … }            ✗
+   { path: 'notes/new', … }   ✗  ("12" n'est pas "new")
    { path: 'notes/:id', … }   ✓  → id = "12"
    │
    ▼
@@ -358,9 +385,11 @@ private readonly noteApi = inject(NoteApi);
 | `Routes` | La table URL → composant | `app.routes.ts` |
 | `<router-outlet />` | L'emplacement où s'affiche la page | `app.html` |
 | `routerLink` | Un lien interne, sans rechargement | `[routerLink]="['/notes', note.id]"` |
-| `router.navigate([...])` | Naviguer depuis le code | `HomePage.openNote()` |
+| `router.navigate([...])` | Naviguer depuis le code | `NoteCreatePage.openNote()`, et le retour à l'accueil après une suppression |
 | `ActivatedRoute.paramMap` | Lire les paramètres de l'URL | `NoteDetailPage` lit `id` |
 | `{ path: '**', redirectTo: '' }` | URL inconnue → accueil | dernière route |
+
+**Pourquoi `notes/new` est déclarée avant `notes/:id` ?** Le routeur prend la **première** route qui correspond. Dans l'autre ordre, `/notes/new` correspondrait à `notes/:id` avec `id = "new"`, et tu tomberais sur « Note introuvable » au lieu du formulaire.
 
 **Pourquoi `paramMap` (un Observable) et pas une lecture unique de l'URL ?** Si tu passes de `/notes/1` à `/notes/2`, Angular **réutilise** le même composant au lieu d'en créer un nouveau. Seul `paramMap` te prévient que l'id a changé.
 
@@ -377,7 +406,7 @@ Trois façons de s'abonner, toutes présentes dans Brainers :
 
 | Façon | Où | Désabonnement |
 | :--- | :--- | :--- |
-| `.subscribe({ next, error })` | `NoteCreateForm.submit()` | Inutile : un Observable HTTP se termine tout seul après la réponse |
+| `.subscribe({ next, error })` | `NoteForm.submit()`, `NoteDetailPage.deleteNote()` | Inutile : un Observable HTTP se termine tout seul après la réponse |
 | `switchMap(() => api.xxx())` | `NoteSearch`, `NoteDetailPage` | Géré par l'opérateur (et il annule la requête précédente) |
 | `toSignal(obs)` | `NoteSearch`, `NoteDetailPage` | Automatique à la destruction du composant |
 
@@ -385,50 +414,68 @@ Trois façons de s'abonner, toutes présentes dans Brainers :
 
 En cas d'erreur HTTP (404, 409, 500…), l'Observable émet une `HttpErrorResponse` dont tu lis le `status`.
 
+`delete` renvoie un `Observable<void>` : le back répond `204 No Content`, sans corps. On s'abonne seulement pour savoir **quand** c'est fini (et si ça a échoué).
+
 ### 3.8 La recherche : le pipeline RxJS pas à pas
 
-**Le concept.** `valueChanges` est un Observable qui émet chaque nouvelle valeur du champ. On lui applique une chaîne d'**opérateurs**, comme un `stream()` Java sur une collection, mais dans le temps.
+**Le concept.** Un `Subject` est un Observable dans lequel **on pousse soi-même** les valeurs, avec `next()`. Chaque clic sur « Rechercher » y pousse le texte du champ. On lui applique ensuite une chaîne d'**opérateurs**, comme un `stream()` Java sur une collection, mais dans le temps.
 
 ```ts
-this.searchControl.valueChanges.pipe(
-  map((value) => value.trim()),                  // 1. nettoyer
-  debounceTime(SEARCH_DEBOUNCE_MS),              // 2. attendre 300 ms de calme
-  distinctUntilChanged(),                        // 3. ignorer si identique
-  switchMap((term) => (term === '' ? of(IDLE) : this.search(term))),  // 4. chercher
-)
+private readonly searches = new Subject<string>();
+
+// (submit) sur le <form> : clic sur « Rechercher » OU touche Entrée dans le champ
+protected submit(event: Event): void {
+  event.preventDefault();                               // pas de rechargement de la page
+  this.searches.next(this.searchControl.value.trim());  // 1. pousser le texte nettoyé
+}
+
+protected readonly result = toSignal(
+  this.searches.pipe(switchMap((term) => this.search(term))),  // 2. chercher
+  { initialValue: IDLE },
+);
 ```
 
-**Ce qui se passe quand tu tapes « java » vite**, sur une ligne de temps :
+**Ce qui se passe quand tu cliques sur « Rechercher »** avec « java » dans le champ :
 
 ```text
-temps          0    60   120  180          480 ms
-frappes        j    ja   jav  java
-               │    │    │    │
-map(trim)      j    ja   jav  java
-               │    │    │    │
-debounce(300)  ✗    ✗    ✗    └──── 300 ms sans frappe ────▶ "java"
-                                                              │
-distinct                                                      "java"  (≠ précédent)
-                                                              │
-switchMap                                     GET /api/notes?title=java
-                                                              │
-                                                     [5 notes] → result()
+clic « Rechercher »   ──▶  submit()  ──▶  searches.next("java")
+                                                │
+switchMap                                GET /api/notes?title=java
+                                                │
+                                       [5 notes] → result()  → la liste s'affiche
 ```
 
-Sans `debounceTime`, tu enverrais 4 requêtes. Avec, une seule.
+Taper dans le champ ne fait **rien** : seul le clic (ou Entrée) pousse une valeur dans `searches`. Un test le vérifie.
 
-**Pourquoi `switchMap` et pas `mergeMap` ?** Imagine : tu tapes « ja », la requête part, le back est lent ; tu tapes « java », une deuxième requête part et revient vite. Puis la réponse de « ja » arrive enfin…
+**Le champ vide.** `searches.next("")` est une vraie recherche. `NoteApi.searchByTitle('')` appelle alors `GET /api/notes` **sans** paramètre, et ton back renvoie toutes les notes.
+
+**Pourquoi `preventDefault()` ?** Envoyer un `<form>` est un comportement natif du navigateur : sans `preventDefault()`, il rechargerait la page. On garde le `<form>` parce qu'il apporte gratuitement la touche Entrée et `role="search"` pour les lecteurs d'écran.
+
+**Pourquoi `switchMap` et pas `mergeMap` ?** Imagine : tu cherches « ja », la requête part, le back est lent ; tu corriges en « java » et relances, une deuxième requête part et revient vite. Puis la réponse de « ja » arrive enfin…
 
 ```text
  mergeMap  :  résultats "java" affichés … puis ÉCRASÉS par les résultats de "ja"   ✗
  switchMap :  la requête "ja" est ANNULÉE dès que "java" arrive                   ✓
 ```
 
-**Pourquoi le `catchError` est dans `search()` et pas à la fin du pipeline ?** Une erreur qui atteint le pipeline principal le **termine** : plus aucune frappe ne déclencherait de recherche. Placé dans la recherche, il transforme l'erreur en état `{ status: 'error' }` et le pipeline continue. Un test vérifie justement qu'une recherche fonctionne encore après une erreur.
+**Pourquoi le `catchError` est dans `search()` et pas à la fin du pipeline ?** Une erreur qui atteint le pipeline principal le **termine** : plus aucun clic ne déclencherait de recherche. Placé dans la recherche, il transforme l'erreur en état `{ status: 'error' }` et le pipeline continue. Un test vérifie justement qu'une recherche fonctionne encore après une erreur.
 
 **Le spinner.** `this.loading.set(true)` au départ de la recherche, `finalize(() => this.loading.set(false))` à la fin. `finalize` est appelé quand la requête se termine **ou** quand `switchMap` l'annule. Les anciens résultats restent affichés pendant le chargement, ce qui évite un clignotement.
 
-**La limite de 10.** `notes.slice(0, SEARCH_MAX_RESULTS)`, et on garde `total` pour afficher « 10 premiers résultats sur 15 ».
+**La limite de 10.** `notes.slice(0, SEARCH_MAX_RESULTS)`, et on garde `total` pour afficher « 10 premiers résultats sur 20 ».
+
+**Variante : chercher pendant la frappe.** C'était la première version de Brainers. On remplace le `Subject` par `searchControl.valueChanges` (un Observable qui émet chaque nouvelle valeur du champ), et on ajoute deux opérateurs :
+
+```ts
+this.searchControl.valueChanges.pipe(
+  map((value) => value.trim()),
+  debounceTime(300),          // attendre 300 ms sans frappe : « java » tapé vite = 1 requête, pas 4
+  distinctUntilChanged(),     // ignorer si le texte n'a pas changé
+  switchMap((term) => this.search(term)),
+)
+```
+
+Le reste (`search()`, `catchError`, `finalize`, l'état) ne change pas.
 
 ### 3.9 Les formulaires réactifs
 
@@ -465,6 +512,26 @@ Chaque contrôle a un **état** que tu peux lire : `value`, `valid`/`invalid`, `
 
 **`NonNullableFormBuilder`** : après un `reset()`, les champs reviennent à `''` et pas à `null`. Tu évites des `null` partout dans ton code.
 
+**Le même formulaire pour modifier.** `NoteForm` a une entrée facultative :
+
+```ts
+readonly note = input<Note | null>(null);   // absente : création ; présente : modification
+
+ngOnInit(): void {
+  const note = this.note();
+  if (note) {
+    this.form.setValue({ title: note.title, content: note.content });   // pré-remplir
+  }
+}
+
+// à l'envoi : une seule ligne choisit la requête
+const save = note ? this.noteApi.update(note.id, request) : this.noteApi.create(request);
+```
+
+Pourquoi `ngOnInit` et pas le constructeur ? Dans le constructeur, Angular n'a pas encore donné ses valeurs aux entrées : `this.note()` vaudrait toujours `null`. `ngOnInit` est appelé juste après, quand elles sont connues.
+
+Tout le reste est commun aux deux cas : validateurs, messages, 409 placé sur le champ, bouton désactivé. C'est le gain d'un seul formulaire.
+
 ### 3.10 Modéliser les états d'un écran
 
 **Le concept.** Au lieu de plusieurs booléens, un **type union** liste tous les états possibles. Un seul est vrai à la fois.
@@ -491,7 +558,37 @@ L'équivalent Java, c'est une `sealed interface` avec un `record` par état et u
 - **Tous les cas sont listés au même endroit** : un état sans affichage se repère tout de suite.
 - **Impossible d'afficher une note inexistante** : `note` n'existe que dans l'état `success`, et le compilateur le vérifie.
 
-**Une exception assumée, dans la recherche.** `loading` y est un signal séparé du résultat. Raison : pendant une nouvelle recherche, on veut **garder les anciens résultats affichés** (sinon la liste disparaît et réapparaît à chaque frappe). Le spinner dit « ça charge », la liste reste en place. Règle : un type d'état par défaut, et une information séparée seulement quand elle doit coexister avec les autres.
+**Deux informations indépendantes dans le détail.** La page de détail a deux questions à suivre :
+
+```ts
+type DetailState = 'loading' | 'success' | 'not-found' | 'error'   // la note est-elle là ? (simplifié)
+type Mode        = 'read' | 'edit' | 'confirm-delete';           // que fait l'utilisateur ?
+```
+
+Deux types séparés, parce que ce sont deux sujets différents : le chargement vient du back, le mode vient des clics. On regarde le mode **seulement** dans l'état `success` : on ne peut pas modifier une note qui n'est pas chargée.
+
+```html
+@case ('success') {
+  @if (mode() === 'edit') {  <app-note-form [note]="current.note" … />  }
+  @else {  la carte, avec « Modifier » / « Supprimer » ou la confirmation  }
+}
+```
+
+**`linkedSignal` : un état qu'on peut corriger.** `toSignal()` donne un signal en **lecture seule**. Or, après une modification, le back renvoie la note à jour, et on veut l'afficher sans tout recharger. `linkedSignal` suit une source, mais accepte aussi un `set()` :
+
+```ts
+private readonly loaded = toSignal(/* paramMap → getById */, { initialValue: LOADING });
+protected readonly state = linkedSignal(() => this.loaded());   // suit `loaded`…
+
+protected onSaved(note: Note): void {
+  this.state.set({ status: 'success', note });                   // …et accepte une correction
+  this.mode.set('read');
+}
+```
+
+Si l'URL change, `loaded` change, et `state` repart de la nouvelle valeur : la correction locale est oubliée, ce qui est voulu.
+
+**Une exception assumée, dans la recherche.** `loading` y est un signal séparé du résultat. Raison : pendant une nouvelle recherche, on veut **garder les anciens résultats affichés** (sinon la liste disparaît et réapparaît à chaque recherche). De même, `deleting` et `deleteFailed` sont des signaux à part dans le détail : ils accompagnent la carte, ils ne la remplacent pas. Le spinner dit « ça charge », la liste reste en place. Règle : un type d'état par défaut, et une information séparée seulement quand elle doit coexister avec les autres.
 
 ### 3.11 Spartan UI
 
@@ -499,7 +596,7 @@ L'équivalent Java, c'est une `sealed interface` avec un `record` par état et u
 
 | Couche | Où elle vit | Ce qu'elle apporte | Tu la modifies ? |
 | :--- | :--- | :--- | :--- |
-| **brain** (`@spartan-ng/brain`) | `node_modules` (installée par npm) | Le comportement et l'accessibilité : clavier, attributs ARIA, état des onglets, des champs | Non |
+| **brain** (`@spartan-ng/brain`) | `node_modules` (installée par npm) | Le comportement et l'accessibilité : clavier, attributs ARIA, état des boutons, des champs | Non |
 | **helm** (`@spartan-ng/helm/...`) | `libs/ui/` (**copiée dans ton projet**) | Le style : des classes Tailwind posées sur les éléments | Oui, c'est ton code |
 
 L'import `@spartan-ng/helm/button` ressemble à un paquet npm, mais c'est un **alias** déclaré dans `tsconfig.json` qui pointe vers `libs/ui/button/src/index.ts`.
@@ -513,7 +610,7 @@ imports: [HlmButtonImports],
 
 ```html
 <!-- 2. Poser la directive sur un élément HTML natif -->
-<button hlmBtn variant="ghost" size="sm">Effacer</button>
+<button hlmBtn variant="ghost" size="sm">Annuler</button>
 <a hlmBtn routerLink="/">Retour</a>            <!-- un lien qui a l'air d'un bouton -->
 ```
 
@@ -523,16 +620,17 @@ La plupart des composants Spartan sont des **directives** posées sur des balise
 
 | Composant | Utilisé pour | Fichier |
 | :--- | :--- | :--- |
-| Tabs | Rechercher / Créer une note | `home-page.html` |
 | Input Group + Input | Barre de recherche avec icône et spinner | `note-search.html` |
 | Item | Une ligne de résultat | `note-list.html` |
 | Empty | « Aucune note trouvée », « Note introuvable » | `note-search.html`, `note-detail-page.html` |
 | Alert | Erreurs serveur | plusieurs |
 | Spinner | Chargements | plusieurs |
-| Field (+ Label) | Label, compteur et messages d'erreur d'un champ | `note-create-form.html` |
-| Input, Textarea | Les champs du formulaire | `note-create-form.html` |
-| Button | Tous les boutons, et le lien « Retour » | plusieurs |
-| Card | La note affichée | `note-detail-page.html` |
+| Field (+ Label) | Label, compteur et messages d'erreur d'un champ | `note-form.html` |
+| Input, Textarea | Les champs du formulaire | `note-form.html` |
+| Button | Tous les boutons, et les liens « Créer » et « Retour ». `variant="destructive"` pour « Supprimer » | plusieurs |
+| Card | La note affichée ; ses boutons sont dans le pied (`hlmCardFooter`) | `note-detail-page.html` |
+
+Le composant **Tabs** est encore dans `libs/ui/tabs/` (il servait aux anciens onglets). Il n'est plus utilisé : tu peux le garder pour plus tard ou supprimer le dossier et sa ligne dans `tsconfig.json`.
 
 **Ajouter un composant :** `npx ng g @spartan-ng/cli:ui dialog` (ou sans nom pour choisir dans une liste). Le CLI copie les fichiers dans `libs/ui/`, ajoute l'alias et installe les dépendances.
 
@@ -559,12 +657,12 @@ Tailwind = des **classes utilitaires** : chaque classe fait une seule chose, et 
 
 ### 4.1 Le trajet complet d'une requête
 
-Exemple : tu tapes « maven » dans la barre de recherche.
+Exemple : tu tapes « maven » dans la barre de recherche, puis tu cliques sur « Rechercher ».
 
 ```text
  NAVIGATEUR (localhost:4200)
  ┌──────────────────────────────────────────────────────────────┐
- │ NoteSearch   frappe → 300 ms → switchMap                     │
+ │ NoteSearch   clic → searches.next('maven') → switchMap       │
  │      │                                                       │
  │      ▼                                                       │
  │ NoteApi.searchByTitle('maven')                               │
@@ -620,9 +718,11 @@ Exemple : tu tapes « maven » dans la barre de recherche.
 
 | Action | Front (`NoteApi`) | Requête | Back (`NoteController`) | Réponses |
 | :--- | :--- | :--- | :--- | :--- |
-| Rechercher | `searchByTitle(title)` | `GET /notes?title=…` | `getAll(search)` | `200` + liste (vide possible) |
+| Rechercher | `searchByTitle(title)` | `GET /notes?title=…` (champ vide : `GET /notes`) | `getAll(search)` | `200` + liste (vide possible) |
 | Consulter | `getById(id)` | `GET /notes/{id}` | `getById(id)` | `200` + note · `404` texte « Note not found » |
-| Créer | `create(request)` | `POST /notes` + `{ title, content }` | `create(noteRequest)` | `201` + note · `409` texte « Note already exist » |
+| Créer | `create(request)` | `POST /notes` + `{ title, content }` | `create(noteRequest)` | `201` + note · `409` texte « Note already exist » · `400` titre vide ou trop long |
+| Modifier | `update(id, request)` | `PUT /notes/{id}` + `{ title, content }` | `update(id, noteRequest)` | `200` + note · `404` · `400` · ⚠️ `500` si le titre est déjà pris (voir 4.6) |
+| Supprimer | `delete(id)` | `DELETE /notes/{id}` | `delete(id)` | `204` sans contenu · `404` |
 
 **Le JSON d'une note**, tel que ton back le renvoie :
 
@@ -632,11 +732,13 @@ Exemple : tu tapes « maven » dans la barre de recherche.
   "title": "Maven",
   "content": "Un outil de gestion et d'automatisation…",
   "createdAt": "2026-10-16T09:49:25.123456",
-  "lastUpDateTime": "2026-10-16T09:49:25.123456"
+  "lastUpdateAt": "2026-10-16T09:49:25.123456"
 }
 ```
 
-⚠️ **`lastUpDateTime`** : Jackson construit les noms du JSON à partir des **getters** de `NoteResponse`, pas des champs. Ton getter s'appelle `getLastUpDateTime()`, donc la clé s'appelle `lastUpDateTime`. L'interface `Note` du front recopie ce nom. Si tu renommes le getter, renomme aussi la propriété dans `note.model.ts`. TypeScript te montrera alors tous les endroits à corriger.
+⚠️ **`lastUpdateAt`** : `NoteResponse` est un **record** Java, et Jackson nomme les clés du JSON d'après ses composants. Ton record déclare `lastUpdateAt`, donc la clé s'appelle `lastUpdateAt`. L'interface `Note` du front recopie ce nom.
+
+Ce nom a déjà changé une fois : quand `NoteResponse` était une classe avec un getter `getLastUpDateTime()`, la clé s'appelait `lastUpDateTime`. Après ton passage au record, le front lisait encore l'ancien nom, et la date « Modifiée le » restait vide, sans aucune erreur. C'est corrigé. Retiens la leçon : si tu renommes un composant du record, renomme aussi la propriété dans `note.model.ts`. TypeScript te montrera alors tous les endroits à corriger.
 
 ### 4.4 Ce que voit l'utilisateur pour chaque réponse
 
@@ -645,11 +747,17 @@ Le front lit le **code HTTP**, jamais le texte du message (qui peut changer côt
 | Situation | Réponse du back | Ce qui s'affiche |
 | :--- | :--- | :--- |
 | Recherche avec résultats | `200` + liste | Les notes (10 max) |
+| Recherche, champ vide | `200` + toutes les notes | Les 10 premières, et « 10 premiers résultats sur 20 » |
 | Recherche sans résultat | `200` + `[]` | « Aucune note trouvée. » |
-| Note ouverte | `200` + note | La carte de la note |
+| Note ouverte | `200` + note | La carte de la note, avec « Modifier » et « Supprimer » |
+| Note modifiée | `200` + note | La carte, avec le nouveau contenu et la nouvelle date de modification |
+| Note supprimée | `204` | Retour à l'accueil |
+| Modifier une note supprimée entre-temps | `404` | « Cette note n'existe plus. » |
+| Suppression impossible | `404` / `500` / `0` | Alerte « La note n'a pas été supprimée. », la note reste affichée |
 | Note inexistante | `404` | « Note introuvable » |
 | URL `/notes/abc` | *(aucun appel)* | « Note introuvable » : le front ne demande même pas |
-| Titre déjà pris | `409` | « Une note porte déjà ce titre. » sous le champ |
+| Titre déjà pris (création) | `409` | « Une note porte déjà ce titre. » sous le champ |
+| Titre déjà pris (modification) | `500`, aujourd'hui | Alerte « Le serveur est injoignable ou a rencontré une erreur… » (voir 4.6, point 5) |
 | Données refusées | `400` | Alerte « Le serveur a refusé la note… » |
 | Back arrêté ou plantage | `500` / `502` / `0` | Alerte « Le serveur est injoignable ou a rencontré une erreur… » |
 
@@ -683,9 +791,18 @@ Le front fonctionne avec ton back **tel quel**. Ces changements le rendent plus 
    List<Note> findTop10ByTitleContainingIgnoreCaseOrderByLastUpdateAtDesc(String title);
    ```
    Le `slice(0, 10)` du front devient alors un simple filet de sécurité, et le message « 10 premiers sur N » ne s'affichera plus (le back ne renverra jamais plus de 10 notes).
-3. **Une recherche vide.** `?title=` (chaîne vide) renvoie aujourd'hui toutes les notes. Le front n'envoie jamais de recherche vide, mais le back ne devrait pas en dépendre : `search == null || search.isBlank()`.
-4. **La validation côté back.** `NoteRequest` n'a toujours aucune contrainte : n'importe qui peut créer une note au titre vide avec Postman. Le front valide pour le confort, **le back doit valider pour la sécurité** (`@NotBlank`, `@Size(max = 100)`).
-5. **Titre unique ou pas ?** Ton entité impose un titre unique, ton README (RG5) dit le contraire. Le front gère le 409. Mets le README en accord avec ton choix.
+3. **Une recherche faite d'espaces.** Le front nettoie le texte et envoie `GET /notes` sans paramètre quand le champ est vide. Mais un appel direct `?title=%20` ne trouverait que les titres qui contiennent un espace. Traite-le comme « pas de recherche » : `search == null || search.isBlank()` → `findAll()`.
+4. **La validation du contenu.** `NoteRequest` valide maintenant le titre (`@NotBlank`, `@Size(max = 100)`), et le front affiche le `400` qui en résulte. Le contenu, lui, n'a encore aucune contrainte : ajoute `@NotBlank` et `@Size(max = 10000)`. Le front valide pour le confort, **le back doit valider pour la sécurité**.
+5. **Le 409 manque à la modification.** `create()` vérifie le doublon et lève `NoteAlreadyExistsException` (409). `update()` ne le fait pas : c'est la contrainte `unique` de la base qui refuse, avec une exception non gérée, donc un `500`. Ajoute la même vérification dans `update()`, en ignorant la note elle-même :
+   ```java
+   repository.findNoteByTitle(request.title())
+       .filter(other -> !other.getId().equals(id))
+       .ifPresent(other -> {
+           throw new NoteAlreadyExistsException(MessageException.NOTE_ALREADY_EXIST.getMessageException());
+       });
+   ```
+   Le front n'a rien à changer : il gère déjà le 409, et affichera « Une note porte déjà ce titre. » sous le champ, en modification comme en création.
+6. **Titre unique ou pas ?** Ton entité impose un titre unique, ton README (RG5) dit le contraire. Le front gère le 409. Mets le README en accord avec ton choix.
 
 ---
 
@@ -695,20 +812,21 @@ Ordre de lecture conseillé : du bas (les données) vers le haut (les pages).
 
 | # | Fichier | Rôle | Ce qu'il faut y regarder |
 | :---: | :--- | :--- | :--- |
-| 1 | `notes/data/note.model.ts` | Le contrat JSON | `lastUpDateTime` et pourquoi |
+| 1 | `notes/data/note.model.ts` | Le contrat JSON | `lastUpdateAt` et pourquoi (4.3) |
 | 2 | `notes/data/note.rules.ts` | RG1/RG2 | Une seule source pour les limites côté front |
-| 3 | `notes/data/note-api.ts` | Les appels HTTP | Une méthode par route, chaque méthode commentée avec la route Spring |
+| 3 | `notes/data/note-api.ts` | Les appels HTTP | Une méthode par route (dont `update` et `delete`), chaque méthode commentée avec la route Spring |
 | 4 | `shared/validators/not-blank.validator.ts` | Refuser `"   "` | Un validateur est une fonction pure |
 | 5 | `notes/components/note-list/*` | Afficher une liste | `input.required`, `@for … track`, `routerLink` |
-| 6 | `notes/components/note-search/*` | La recherche | Le pipeline RxJS (3.8), `loading`, `@switch` sur l'état |
-| 7 | `notes/components/note-create-form/*` | La création | Le FormGroup, les `hlm-field-error`, le 409 placé sur le champ, `output()` |
-| 8 | `notes/pages/home-page/*` | La page d'accueil | Les onglets, l'écoute de `(created)`, `router.navigate` |
-| 9 | `notes/pages/note-detail-page/*` | Le détail | `paramMap`, l'id invalide, le type d'état à 4 cas |
-| 10 | `app.routes.ts` | Les routes | L'ordre, `:id`, `**` |
-| 11 | `app.config.ts` | Le démarrage | Les `provide…()` |
-| 12 | `app.ts` / `app.html` | La coquille | `<router-outlet />` |
-| 13 | `environments/*`, `proxy.conf.json`, `angular.json` | La configuration | Section 4.2 |
-| 14 | `*.spec.ts` | Les tests | Section 7 |
+| 6 | `notes/components/note-search/*` | La recherche | Le `Subject` et `switchMap` (3.8), `preventDefault()`, `<ng-content />`, `@switch` sur l'état |
+| 7 | `notes/components/note-form/*` | Créer et modifier | Le FormGroup, l'entrée `note` et `ngOnInit`, les `hlm-field-error`, le 409 placé sur le champ, `saved` / `cancelled` |
+| 8 | `notes/pages/home-page/*` | La page d'accueil | Le lien « Créer » projeté dans `NoteSearch` |
+| 9 | `notes/pages/note-create-page/*` | La création | L'écoute de `(saved)` et `(cancelled)`, `router.navigate` |
+| 10 | `notes/pages/note-detail-page/*` | Le détail | `paramMap`, l'id invalide, le type d'état à 4 cas, le type `Mode`, `linkedSignal`, la suppression |
+| 11 | `app.routes.ts` | Les routes | L'ordre (`notes/new` avant `notes/:id`), `:id`, `**` |
+| 12 | `app.config.ts` | Le démarrage | Les `provide…()` |
+| 13 | `app.ts` / `app.html` | La coquille | `<router-outlet />` |
+| 14 | `environments/*`, `proxy.conf.json`, `angular.json` | La configuration | Section 4.2 |
+| 15 | `*.spec.ts` | Les tests | Section 7 |
 
 ---
 
@@ -716,17 +834,18 @@ Ordre de lecture conseillé : du bas (les données) vers le haut (les pages).
 
 ### 6.1 Installation
 
-1. **Copie le dossier `front/`** à la racine de ton repo, à côté de `demo/`. Il ne contient pas de dossier `.git` : il s'intègre à ton repo existant.
+1. **Récupère le code.** Le front est dans le repo `brainersfront`, dossier `front/`. Le back est dans le repo `brainers`, dossier `demo/`. ⚠️ Lance toujours le front depuis `front/` : le repo contient aussi un ancien projet `brainers-front/`, qui n'est pas celui-ci.
 2. **Vérifie Node** : `node -v` doit afficher au moins `v22.22.3`, ou une version 24. Sinon, avec nvm (présent dans Codespaces) : `cd front && nvm install && nvm use` (la version est lue dans `.nvmrc`).
 3. **Installe les dépendances** : `cd front && npm install`.
 
 ### 6.2 Lancement
 
 ```bash
-# Terminal 1
+# Terminal 1 — repo brainers
 cd demo && ./mvnw spring-boot:run          # back sur :8080 (avec tes 20 notes de démo)
+                                           # sous Windows : mvnw.cmd spring-boot:run
 
-# Terminal 2
+# Terminal 2 — repo brainersfront
 cd front && npm start                      # front sur :4200
 ```
 
@@ -742,7 +861,9 @@ Ouvre `http://localhost:4200`. Dans Codespaces, ouvre le port **4200** depuis l'
 | Les notes créées disparaissent | H2 en mémoire : tout est effacé à chaque redémarrage du back | Normal, et ton `DataLoader` recrée les 20 notes |
 | Contenu long → « erreur serveur » | Colonne limitée à 255 caractères | Voir 4.6, point 1 |
 | Un import `@spartan-ng/helm/...` est souligné en rouge dans l'éditeur | L'éditeur n'a pas relu `tsconfig.json` | Redémarre le serveur TypeScript de l'éditeur (ou VS Code) |
-| Une recherche identique ne relance rien | `distinctUntilChanged` : c'est voulu | Modifie le texte |
+| Taper dans la barre n'affiche rien | C'est voulu : la recherche part au clic sur « Rechercher » ou avec Entrée | Clique sur « Rechercher » |
+| Je ne vois pas mes modifications après un `git pull` | Tu as lancé `npm start` depuis un autre dossier (par exemple `brainers-front/`) | Lance `npm start` depuis `front/`. Vérifie avec `git log -1` que tu as bien le dernier commit |
+| Modifier une note avec le titre d'une autre → « erreur serveur » | Le back renvoie 500 au lieu de 409 | Voir 4.6, point 5 |
 
 ---
 
@@ -752,12 +873,13 @@ Ouvre `http://localhost:4200`. Dans Codespaces, ouvre le port **4200** depuis l'
 
 | Fichier de test | Ce qu'il vérifie | Outil clé |
 | :--- | :--- | :--- |
-| `note-api.spec.ts` | Chaque méthode envoie la bonne requête (méthode, URL, paramètres, corps) | `HttpTestingController` |
+| `note-api.spec.ts` | Chaque méthode envoie la bonne requête (méthode, URL, paramètres, corps), y compris `PUT`, `DELETE` et la recherche vide sans paramètre | `HttpTestingController` |
 | `not-blank.validator.spec.ts` | Les 5 cas du validateur | Fonction pure, pas d'Angular |
-| `note-search.spec.ts` | Une seule requête après 300 ms · 10 résultats max · aucun résultat · pas d'appel pour une recherche vide · l'erreur ne casse pas la recherche suivante | `vi.useFakeTimers()` |
-| `note-create-form.spec.ts` | Bouton désactivé si invalide · message « espaces » · titre nettoyé et événement émis · 409 · 400 · 500 · soumission invalide · Effacer | Interaction par le DOM |
-| `note-detail-page.spec.ts` | Note affichée · 404 · id invalide sans appel · 500 | Fausse `ActivatedRoute` |
-| `home-page.spec.ts` | `(created)` déclenche la navigation | `vi.spyOn(router, 'navigate')` |
+| `note-search.spec.ts` | Rien ne part sans clic · texte nettoyé · champ vide = toutes les notes · 10 résultats max · aucun résultat · l'erreur ne casse pas la recherche suivante · une nouvelle recherche annule la précédente | `http.match()` + `cancelled` |
+| `note-form.spec.ts` | Création : bouton désactivé si invalide · message « espaces » · titre nettoyé et `saved` émis · 409 · 400 · 500 · soumission invalide · Annuler. Modification : pré-rempli · `PUT` · 404 | `fixture.componentRef.setInput()` |
+| `note-detail-page.spec.ts` | Note affichée · 404 · id invalide sans appel · 500 · Modifier puis Enregistrer ou Annuler · Supprimer : confirmation, `DELETE` puis accueil, Annuler, échec | Fausse `ActivatedRoute` |
+| `note-create-page.spec.ts` | `(saved)` ouvre la note · `(cancelled)` revient à l'accueil | `vi.spyOn(router, 'navigate')` |
+| `home-page.spec.ts` | La barre, « Rechercher », et le lien « Créer » vers `/notes/new` | Lecture du DOM |
 
 ### 7.2 Les trois idées à retenir
 
@@ -769,7 +891,12 @@ expect(req.request.body).toEqual({ title: 'Stream java', content: '…' }); // a
 req.flush('Note already exist', { status: 409, statusText: 'Conflict' }); // le "back" répond 409
 ```
 
-**2. On contrôle le temps.** `vi.useFakeTimers()` remplace l'horloge. `vi.advanceTimersByTime(299)` avance de 299 ms instantanément. On vérifie qu'aucune requête n'est partie, puis on avance d'1 ms et on vérifie qu'il y en a exactement une. C'est l'horloge figée du cours sur la couverture, appliquée au front.
+**2. On vérifie aussi ce qui ne doit PAS arriver.** `http.expectNone()` : taper sans cliquer n'envoie rien ; « Annuler » une suppression n'envoie aucun `DELETE`. `http.verify()`, à la fin d'un test, échoue si une requête inattendue est partie. Et `http.match()` renvoie toutes les requêtes en attente : on vérifie que la première a été annulée (`cancelled`) par `switchMap`.
+
+```ts
+const [first, second] = http.match((r) => r.url === '/api/notes');
+expect(first.cancelled).toBe(true);   // switchMap a annulé « ja » quand « java » est arrivé
+```
 
 **3. On teste comme un utilisateur.** On remplit les champs du DOM, on clique, puis on lit le texte affiché. On ne touche pas aux propriétés internes du composant. Si tu changes l'implémentation sans changer le comportement, les tests restent verts.
 
@@ -809,7 +936,7 @@ npx @angular/cli@latest new brainers-front --directory front --routing --style t
 ```bash
 npm i -D @spartan-ng/cli
 npx ng g @spartan-ng/cli:init          # choisis un thème (neutral)
-npx ng g @spartan-ng/cli:ui button     # puis input, textarea, field, tabs, card, …
+npx ng g @spartan-ng/cli:ui button     # puis input, textarea, field, card, …
 ```
 
 ✅ Un `<button hlmBtn>Test</button>` dans `app.html` (avec `HlmButtonImports` dans `imports`) a le style Spartan.
@@ -826,13 +953,13 @@ Crée `proxy.conf.json`, ajoute `proxyConfig` dans `angular.json` (cible `serve`
 
 **Étape 5 : les routes et les pages vides**
 
-`ng g component notes/pages/home-page`, idem pour `note-detail-page`, puis la table des routes.
-✅ `/` et `/notes/1` affichent chacune leur page (même vide), une URL inconnue revient à `/`.
+`ng g component notes/pages/home-page`, idem pour `note-create-page` et `note-detail-page`, puis la table des routes (`notes/new` avant `notes/:id`).
+✅ `/`, `/notes/new` et `/notes/1` affichent chacune leur page (même vide), une URL inconnue revient à `/`.
 
 **Étape 6 : la recherche, en deux temps**
 
-D'abord sans délai : `valueChanges.pipe(switchMap(term => api.searchByTitle(term)))` et `NoteList`. Ensuite, ajoute `map(trim)`, `debounceTime`, `distinctUntilChanged`, l'état, la limite de 10.
-✅ Dans l'onglet Réseau des outils du navigateur (F12), taper « java » vite ne produit **qu'une** requête.
+D'abord le minimum : un `<form (submit)>`, un `Subject`, `switchMap(term => api.searchByTitle(term))` et `NoteList`. Ensuite, ajoute le nettoyage du texte, l'état, la limite de 10, le spinner, puis le lien « Créer » avec `<ng-content />`.
+✅ Dans l'onglet Réseau des outils du navigateur (F12), taper « java » ne produit **aucune** requête, et un clic sur « Rechercher » en produit **une**.
 
 **Étape 7 : la page de détail**
 
@@ -844,7 +971,12 @@ D'abord sans délai : `valueChanges.pipe(switchMap(term => api.searchByTitle(ter
 FormGroup, validateurs, `hlm-field-error`, puis l'envoi, le 409 et l'`output()`.
 ✅ Créer « Maven » affiche « Une note porte déjà ce titre. » ; créer une nouvelle note ouvre sa page.
 
-**Étape 9 : les tests**
+**Étape 9 : modifier et supprimer**
+
+`update` et `delete` dans `NoteApi` ; l'entrée `note` et `ngOnInit` dans le formulaire ; le type `Mode`, `linkedSignal` et la suppression dans le détail.
+✅ « Modifier » ouvre le formulaire pré-rempli et « Enregistrer » affiche la note à jour ; « Supprimer » demande confirmation puis ramène à l'accueil, et la note n'apparaît plus dans la recherche.
+
+**Étape 10 : les tests**
 
 Commence par `note-api.spec.ts` (le plus simple), puis le validateur, puis la recherche.
 ✅ `npm run test:coverage` passe le seuil de 80 %.
@@ -855,11 +987,11 @@ Commence par `note-api.spec.ts` (le plus simple), puis le validateur, puis la re
 
 Classés du plus simple au plus ambitieux. Essaie chacun seul avant de regarder les indices.
 
-1. **Modifier une note (US-04).** Indice : `PUT /notes/{id}` existe déjà dans ton back. Le formulaire peut servir aux deux cas si le parent lui passe une note existante par un `input()`.
-2. **Supprimer une note (US-05)** avec confirmation. Indice : composant Spartan `alert-dialog` (`npx ng g @spartan-ng/cli:ui alert-dialog`). Pour les composants qui s'affichent par-dessus la page (fenêtres, menus), Spartan recommande d'ajouter `provideSpartanHlm()` dans `app.config.ts`.
-3. **Garder la recherche dans l'URL** (`/?q=java`). Ainsi, le retour depuis une note retrouve les résultats. Indice : `router.navigate([], { queryParams: { q } })` et lire `queryParamMap`.
+1. **Garder la recherche dans l'URL** (`/?q=java`). Ainsi, « Retour aux notes » retrouve les résultats au lieu d'une page vide. Indice : `router.navigate([], { queryParams: { q } })` dans `submit()`, et lire `queryParamMap` au démarrage.
+2. **Une vraie fenêtre de confirmation** pour la suppression, au lieu de la confirmation dans la carte. Indice : composant Spartan `alert-dialog` (`npx ng g @spartan-ng/cli:ui alert-dialog`). Pour les composants qui s'affichent par-dessus la page (fenêtres, menus), Spartan recommande d'ajouter `provideSpartanHlm()` dans `app.config.ts`.
+3. **Chercher pendant la frappe**, en plus du bouton. Indice : la variante décrite à la fin de 3.8.
 4. **Chargement à la demande** de la page de détail. Indice : `loadComponent: () => import(...)` dans la route.
-5. **Un test de bout en bout avec Playwright** (tu connais l'outil de chez TIL) : le parcours « chercher → ouvrir → revenir ».
+5. **Un test de bout en bout avec Playwright** (tu connais l'outil de chez TIL) : le parcours « chercher → ouvrir → modifier → supprimer ».
 
 ---
 
@@ -873,7 +1005,10 @@ Classés du plus simple au plus ambitieux. Essaie chacun seul avant de regarder 
 | **Pipe** | Une transformation d'affichage (`date`, `number`) |
 | **Signal** | Une valeur qui prévient quand elle change ; on la lit avec `()` |
 | **Observable** | Un flux de valeurs dans le temps ; ne fait rien sans abonnement |
-| **Opérateur RxJS** | Une étape de traitement d'un Observable (`map`, `debounceTime`, `switchMap`) |
+| **Opérateur RxJS** | Une étape de traitement d'un Observable (`map`, `switchMap`, `catchError`) |
+| **Subject** | Un Observable dans lequel on pousse soi-même les valeurs avec `next()` |
+| **Projection de contenu** | Passer du HTML à un enfant entre ses balises ; il l'affiche à l'endroit de son `<ng-content />` |
+| **linkedSignal** | Un signal qui suit une source, mais qu'on peut aussi modifier avec `set()` |
 | **Service** | Une classe sans affichage, instance unique, injectée avec `inject()` |
 | **Injection de dépendances** | Angular fournit les objets dont une classe a besoin (comme Spring) |
 | **SPA** | Une seule page HTML ; le routeur échange les composants affichés |

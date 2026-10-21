@@ -15,19 +15,70 @@
     }
 
     @case ('success') {
-      <article hlmCard>
-        <header hlmCardHeader>
-          <h1 hlmCardTitle class="text-xl font-semibold">{{ current.note.title }}</h1>
-          <p hlmCardDescription>
-            Créée le {{ current.note.createdAt | date: "d MMM y 'à' HH:mm" }} · Modifiée le
-            {{ current.note.lastUpDateTime | date: "d MMM y 'à' HH:mm" }}
-          </p>
-        </header>
-        <div hlmCardContent>
-          <!-- whitespace-pre-wrap : conserve les retours à la ligne du contenu -->
-          <p class="leading-relaxed whitespace-pre-wrap">{{ current.note.content }}</p>
-        </div>
-      </article>
+      @if (mode() === 'edit') {
+        <h1 class="text-2xl font-semibold tracking-tight">Modifier la note</h1>
+        <!-- [note] : le formulaire est pré-rempli et enverra un PUT au lieu d'un POST. -->
+        <app-note-form
+          [note]="current.note"
+          (saved)="onSaved($event)"
+          (cancelled)="backToReading()"
+        />
+      } @else {
+        <article hlmCard>
+          <header hlmCardHeader>
+            <h1 hlmCardTitle class="text-xl font-semibold">{{ current.note.title }}</h1>
+            <p hlmCardDescription>
+              Créée le {{ current.note.createdAt | date: "d MMM y 'à' HH:mm" }} · Modifiée le
+              {{ current.note.lastUpdateAt | date: "d MMM y 'à' HH:mm" }}
+            </p>
+          </header>
+          <div hlmCardContent>
+            <!-- whitespace-pre-wrap : conserve les retours à la ligne du contenu -->
+            <p class="leading-relaxed whitespace-pre-wrap">{{ current.note.content }}</p>
+          </div>
+          <footer hlmCardFooter class="justify-end gap-2">
+            @if (mode() === 'confirm-delete') {
+              <p class="me-auto text-sm">Supprimer définitivement cette note ?</p>
+              <button
+                hlmBtn
+                variant="ghost"
+                type="button"
+                [disabled]="deleting()"
+                (click)="backToReading()"
+              >
+                Annuler
+              </button>
+              <button
+                hlmBtn
+                variant="destructive"
+                type="button"
+                [disabled]="deleting()"
+                (click)="deleteNote(current.note)"
+              >
+                @if (deleting()) {
+                  <hlm-spinner aria-hidden="true" />
+                }
+                Supprimer
+              </button>
+            } @else {
+              <button hlmBtn variant="outline" type="button" (click)="startEdit()">Modifier</button>
+              <button hlmBtn variant="destructive" type="button" (click)="askDeleteConfirmation()">
+                Supprimer
+              </button>
+            }
+          </footer>
+        </article>
+
+        @if (deleteFailed()) {
+          <div hlmAlert variant="destructive">
+            <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+            <h2 hlmAlertTitle>La note n'a pas été supprimée.</h2>
+            <p hlmAlertDescription>
+              Vérifie que le back Spring est démarré (port 8080), puis réessaie.
+            </p>
+          </div>
+        }
+      }
     }
 
     @case ('not-found') {

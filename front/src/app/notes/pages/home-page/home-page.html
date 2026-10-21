@@ -6,23 +6,9 @@
     </p>
   </header>
 
-  <!-- tab="search" : onglet ouvert au chargement.
-       Les deux contenus restent en mémoire : passer d'un onglet à l'autre
-       ne perd ni la recherche en cours, ni la saisie du formulaire. -->
-  <hlm-tabs tab="search">
-    <div hlmTabsList class="w-full" aria-label="Que veux-tu faire ?">
-      <button hlmTabsTrigger="search">Rechercher</button>
-      <button hlmTabsTrigger="create">Créer une note</button>
-    </div>
-
-    <div hlmTabsContent="search" class="pt-4">
-      <app-note-search />
-    </div>
-
-    <div hlmTabsContent="create" class="pt-4">
-      <!-- (created) : on écoute l'événement émis par le formulaire.
-           $event contient la note créée. -->
-      <app-note-create-form (created)="openNote($event)" />
-    </div>
-  </hlm-tabs>
+  <!-- Ce qui est placé entre les balises s'affiche à côté du bouton "Rechercher"
+       (voir <ng-content /> dans note-search.html). -->
+  <app-note-search>
+    <a hlmBtn variant="outline" size="lg" routerLink="/notes/new">Créer</a>
+  </app-note-search>
 </section>

@@ -4,33 +4,22 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCircleAlert, lucideSearch, lucideSearchX } from '@ng-icons/lucide';
 import { HlmAlertImports } from '@spartan-ng/helm/alert';
+import { HlmButtonImports } from '@spartan-ng/helm/button';
 import { HlmEmptyImports } from '@spartan-ng/helm/empty';
 import { HlmInputGroupImports } from '@spartan-ng/helm/input-group';
 import { HlmSpinnerImports } from '@spartan-ng/helm/spinner';
-import {
-  catchError,
-  debounceTime,
-  distinctUntilChanged,
-  finalize,
-  map,
-  Observable,
-  of,
-  switchMap,
-} from 'rxjs';
+import { catchError, finalize, map, Observable, of, Subject, switchMap } from 'rxjs';
 
 import { Note } from '../../data/note.model';
 import { NoteApi } from '../../data/note-api';
 import { NoteList } from '../note-list/note-list';
-
-/** Délai d'attente après la dernière frappe avant d'interroger le back (ms). */
-export const SEARCH_DEBOUNCE_MS = 300;
 
 /** Nombre maximum de résultats affichés sous la barre. */
 export const SEARCH_MAX_RESULTS = 10;
 
 /**
  * Ce que la zone de résultats peut afficher. Un seul état à la fois :
- * - idle    : le champ est vide, on n'a rien cherché
+ * - idle    : on n'a encore rien cherché
  * - success : le back a répondu (la liste peut être vide)
  * - error   : la requête a échoué
  */
@@ -40,18 +29,22 @@ export type SearchResult =
 const IDLE: SearchResult = { status: 'idle' };
 
 /**
- * La barre de recherche et ses résultats.
+ * La barre de recherche, le bouton "Rechercher" et les résultats.
  *
- * Le cœur est un "pipeline" RxJS sur les valeurs du champ :
+ * La recherche part au clic sur "Rechercher" (ou avec Entrée), pas à chaque frappe.
+ * Le cœur est un "pipeline" RxJS sur les recherches demandées :
  *
- *   frappes → nettoyer → attendre 300 ms de calme → ignorer si identique
- *           → appeler le back (en annulant l'appel précédent) → état affiché
+ *   clic → texte nettoyé → appeler le back (en annulant l'appel précédent) → état affiché
+ *
+ * Le parent peut ajouter ses propres boutons à côté de "Rechercher" :
+ *   <app-note-search> <a hlmBtn …>Créer</a> </app-note-search>
  */
 @Component({
   selector: 'app-note-search',
   imports: [
     ReactiveFormsModule,
     NgIcon,
+    HlmButtonImports,
     HlmInputGroupImports,
     HlmSpinnerImports,
     HlmEmptyImports,
@@ -72,22 +65,32 @@ export class NoteSearch {
   /** Vrai pendant qu'une requête est en cours (affiche le spinner dans la barre). */
   protected readonly loading = signal(false);
 
+  /**
+   * Les recherches demandées. Un Subject est un Observable dans lequel
+   * on pousse soi-même les valeurs : ici, un texte à chaque clic sur "Rechercher".
+   */
+  private readonly searches = new Subject<string>();
+
   /** Le résultat affiché sous la barre, mis à jour à chaque recherche. */
   protected readonly result = toSignal(
-    this.searchControl.valueChanges.pipe(
-      // 1. On retire les espaces autour : "  java " → "java"
-      map((value) => value.trim()),
-      // 2. On attend 300 ms sans nouvelle frappe avant de continuer
-      debounceTime(SEARCH_DEBOUNCE_MS),
-      // 3. On ignore la valeur si elle est identique à la précédente
-      distinctUntilChanged(),
-      // 4. On lance la recherche. switchMap ANNULE la requête précédente
-      //    si une nouvelle arrive : une réponse lente ne peut pas écraser
-      //    une réponse plus récente.
-      switchMap((term) => (term === '' ? of(IDLE) : this.search(term))),
+    this.searches.pipe(
+      // switchMap ANNULE la requête précédente si une nouvelle recherche arrive :
+      // une réponse lente ne peut pas écraser une réponse plus récente.
+      switchMap((term) => this.search(term)),
     ),
     { initialValue: IDLE },
   );
+
+  /**
+   * Clic sur "Rechercher" ou touche Entrée dans le champ.
+   * preventDefault() : sans lui, le navigateur enverrait le formulaire et rechargerait la page.
+   * Un champ vide est une vraie recherche : elle renvoie toutes les notes.
+   */
+  protected submit(event: Event): void {
+    event.preventDefault();
+    // On retire les espaces autour : "  java " → "java"
+    this.searches.next(this.searchControl.value.trim());
+  }
 
   /** Une recherche : appel au back, transformé en état affichable. */
   private search(term: string): Observable<SearchResult> {

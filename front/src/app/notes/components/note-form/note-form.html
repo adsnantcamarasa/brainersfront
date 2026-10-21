@@ -65,7 +65,7 @@
   }
 
   <div class="flex justify-end gap-2">
-    <button hlmBtn variant="ghost" type="button" (click)="clear()">Effacer</button>
+    <button hlmBtn variant="ghost" type="button" (click)="cancel()">Annuler</button>
     <!-- Désactivé tant que le formulaire est invalide (US-01) ou pendant l'envoi -->
     <button hlmBtn type="submit" [disabled]="form.invalid || submitting()">
       @if (submitting()) {

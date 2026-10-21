@@ -1,7 +1,7 @@
 # Brainers — front Angular
 
-Le front de Brainers : rechercher une note par son titre, créer une note, afficher une note.
-Angular 22 + Spartan UI (Tailwind v4), branché sur le back Spring du dossier `demo/`.
+Le front de Brainers : rechercher une note par son titre, créer une note, la lire, la modifier ou la supprimer.
+Angular 22 + Spartan UI (Tailwind v4), branché sur le back Spring du dossier `demo/` (repo `brainers`).
 
 👉 **Le guide complet, qui explique chaque fichier et chaque choix : [GUIDE.md](GUIDE.md).**
 
@@ -13,11 +13,11 @@ Angular 22 + Spartan UI (Tailwind v4), branché sur le back Spring du dossier `d
 ## Lancer
 
 ```bash
-# Terminal 1 — le back
+# Terminal 1 — le back (repo brainers)
 cd demo
-./mvnw spring-boot:run
+./mvnw spring-boot:run   # sous Windows : mvnw.cmd spring-boot:run
 
-# Terminal 2 — le front
+# Terminal 2 — le front (repo brainersfront)
 cd front
 npm install      # la première fois seulement
 npm start        # = ng serve → http://localhost:4200

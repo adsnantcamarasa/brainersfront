@@ -26,9 +26,11 @@ export class NoteApi {
   /**
    * GET /api/notes?title=...  →  NoteController.getAll(search)
    * Renvoie les notes dont le titre contient le texte (sans tenir compte de la casse).
+   * Titre vide : GET /api/notes, sans paramètre → toutes les notes.
    */
   searchByTitle(title: string): Observable<Note[]> {
-    return this.http.get<Note[]>(this.notesUrl, { params: { title } });
+    const params: Record<string, string> = title === '' ? {} : { title };
+    return this.http.get<Note[]>(this.notesUrl, { params });
   }
 
   /**
@@ -45,5 +47,21 @@ export class NoteApi {
    */
   create(request: NoteRequest): Observable<Note> {
     return this.http.post<Note>(this.notesUrl, request);
+  }
+
+  /**
+   * PUT /api/notes/{id}  →  NoteController.update(id, noteRequest)
+   * Réponse 200 avec la note modifiée. Erreur HTTP 404 si la note n'existe pas.
+   */
+  update(id: number, request: NoteRequest): Observable<Note> {
+    return this.http.put<Note>(`${this.notesUrl}/${id}`, request);
+  }
+
+  /**
+   * DELETE /api/notes/{id}  →  NoteController.delete(id)
+   * Réponse 204 sans contenu. Erreur HTTP 404 si la note n'existe pas.
+   */
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.notesUrl}/${id}`);
   }
 }

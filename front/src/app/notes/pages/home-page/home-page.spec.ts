@@ -1,37 +1,26 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-import { provideRouter, Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 
-import { NoteCreateForm } from '../../components/note-create-form/note-create-form';
-import { Note } from '../../data/note.model';
 import { HomePage } from './home-page';
 
 describe('HomePage', () => {
-  it('ouvre la page de la note quand le formulaire annonce une création', () => {
+  it('affiche la recherche, avec le bouton "Créer" qui mène à /notes/new', () => {
     TestBed.configureTestingModule({
       imports: [HomePage],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
-    const router = TestBed.inject(Router);
-    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-
     const fixture = TestBed.createComponent(HomePage);
     fixture.detectChanges();
+    const page: HTMLElement = fixture.nativeElement;
 
-    // On récupère le composant enfant et on simule son événement `created`.
-    const form = fixture.debugElement.query(By.directive(NoteCreateForm))
-      .componentInstance as NoteCreateForm;
-    const note: Note = {
-      id: 21,
-      title: 'Signals Angular',
-      content: 'Une valeur réactive.',
-      createdAt: '2026-10-17T10:00:00',
-      lastUpDateTime: '2026-10-17T10:00:00',
-    };
-    form.created.emit(note);
+    expect(page.querySelector('input[type="search"]')).not.toBeNull();
+    expect(page.querySelector('button[type="submit"]')?.textContent).toContain('Rechercher');
 
-    expect(navigate).toHaveBeenCalledWith(['/notes', 21]);
+    // Le lien "Créer", placé par la page dans NoteSearch, est bien affiché à côté.
+    const create = page.querySelector<HTMLAnchorElement>('app-note-search a')!;
+    expect(create.textContent).toContain('Créer');
+    expect(create.getAttribute('href')).toBe('/notes/new');
   });
 });
