@@ -1,0 +1,14 @@
+<ul hlmItemGroup class="gap-2">
+  <!-- `track note.id` : Angular reconnaît chaque ligne par son id
+       et ne recrée que celles qui ont changé. -->
+  @for (note of notes(); track note.id) {
+    <li>
+      <a hlmItem variant="outline" [routerLink]="['/notes', note.id]">
+        <div hlmItemContent>
+          <h3 hlmItemTitle>{{ note.title }}</h3>
+          <p hlmItemDescription>{{ note.content }}</p>
+        </div>
+      </a>
+    </li>
+  }
+</ul>

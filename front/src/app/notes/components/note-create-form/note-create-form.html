@@ -1,0 +1,77 @@
+<!-- [formGroup] relie la balise <form> au FormGroup `form` du composant.
+     (ngSubmit) se déclenche au clic sur le bouton "submit" ou avec Entrée.
+     novalidate : on laisse Angular valider, pas le navigateur. -->
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate class="flex flex-col gap-6">
+  <div hlmFieldGroup>
+    <!-- Champ titre -->
+    <div hlmField>
+      <label hlmFieldLabel for="note-title">Titre</label>
+      <!-- formControlName="title" : ce champ est le contrôle `title` du FormGroup -->
+      <input
+        hlmInput
+        id="note-title"
+        formControlName="title"
+        placeholder="Ex. Boucler sur une Map"
+        autocomplete="off"
+      />
+      <p hlmFieldDescription>
+        {{ form.controls.title.value.length }} / {{ rules.titleMaxLength }} caractères
+      </p>
+
+      <!-- Chaque message ne s'affiche que si SON erreur est présente
+           ET que le champ a été quitté au moins une fois (touched). -->
+      <hlm-field-error validator="required">Le titre est obligatoire.</hlm-field-error>
+      <hlm-field-error validator="blank">
+        Le titre ne peut pas contenir uniquement des espaces.
+      </hlm-field-error>
+      <hlm-field-error validator="maxlength">
+        Le titre ne doit pas dépasser {{ rules.titleMaxLength }} caractères.
+      </hlm-field-error>
+      <hlm-field-error validator="duplicate">Une note porte déjà ce titre.</hlm-field-error>
+    </div>
+
+    <!-- Champ contenu -->
+    <div hlmField>
+      <label hlmFieldLabel for="note-content">Contenu</label>
+      <textarea
+        hlmTextarea
+        id="note-content"
+        formControlName="content"
+        class="min-h-40"
+        placeholder="Une notion = une note. Garde-la courte."
+      ></textarea>
+      <p hlmFieldDescription>
+        {{ form.controls.content.value.length | number }} /
+        {{ rules.contentMaxLength | number }} caractères
+      </p>
+
+      <hlm-field-error validator="required">Le contenu est obligatoire.</hlm-field-error>
+      <hlm-field-error validator="blank">
+        Le contenu ne peut pas contenir uniquement des espaces.
+      </hlm-field-error>
+      <hlm-field-error validator="maxlength">
+        Le contenu ne doit pas dépasser {{ rules.contentMaxLength | number }} caractères.
+      </hlm-field-error>
+    </div>
+  </div>
+
+  <!-- Erreur globale renvoyée par le serveur -->
+  @if (serverError(); as message) {
+    <div hlmAlert variant="destructive">
+      <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+      <h3 hlmAlertTitle>La note n'a pas été enregistrée.</h3>
+      <p hlmAlertDescription>{{ message }}</p>
+    </div>
+  }
+
+  <div class="flex justify-end gap-2">
+    <button hlmBtn variant="ghost" type="button" (click)="clear()">Effacer</button>
+    <!-- Désactivé tant que le formulaire est invalide (US-01) ou pendant l'envoi -->
+    <button hlmBtn type="submit" [disabled]="form.invalid || submitting()">
+      @if (submitting()) {
+        <hlm-spinner aria-hidden="true" />
+      }
+      Enregistrer
+    </button>
+  </div>
+</form>

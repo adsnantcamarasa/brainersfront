@@ -1,0 +1,20 @@
+<div class="flex min-h-dvh flex-col">
+  <header class="border-b">
+    <div class="mx-auto flex h-14 w-full max-w-2xl items-center px-4">
+      <a routerLink="/" class="flex items-center gap-2 font-semibold tracking-tight">
+        <span
+          class="bg-primary text-primary-foreground grid size-7 place-items-center rounded-md text-sm"
+          aria-hidden="true"
+        >
+          B
+        </span>
+        Brainers
+      </a>
+    </div>
+  </header>
+
+  <main class="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
+    <!-- Le routeur affiche ici la page qui correspond à l'URL (voir app.routes.ts). -->
+    <router-outlet />
+  </main>
+</div>

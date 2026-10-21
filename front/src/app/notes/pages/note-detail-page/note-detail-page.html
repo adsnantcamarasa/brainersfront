@@ -1,0 +1,55 @@
+<div class="flex flex-col gap-4">
+  <!-- hlmBtn sur un <a> : un lien qui a l'apparence d'un bouton -->
+  <a hlmBtn variant="ghost" size="sm" routerLink="/" class="self-start">
+    <ng-icon name="lucideArrowLeft" aria-hidden="true" />
+    Retour aux notes
+  </a>
+
+  @let current = state();
+
+  @switch (current.status) {
+    @case ('loading') {
+      <div class="flex justify-center py-16">
+        <hlm-spinner aria-label="Chargement de la note" />
+      </div>
+    }
+
+    @case ('success') {
+      <article hlmCard>
+        <header hlmCardHeader>
+          <h1 hlmCardTitle class="text-xl font-semibold">{{ current.note.title }}</h1>
+          <p hlmCardDescription>
+            Créée le {{ current.note.createdAt | date: "d MMM y 'à' HH:mm" }} · Modifiée le
+            {{ current.note.lastUpDateTime | date: "d MMM y 'à' HH:mm" }}
+          </p>
+        </header>
+        <div hlmCardContent>
+          <!-- whitespace-pre-wrap : conserve les retours à la ligne du contenu -->
+          <p class="leading-relaxed whitespace-pre-wrap">{{ current.note.content }}</p>
+        </div>
+      </article>
+    }
+
+    @case ('not-found') {
+      <div hlmEmpty class="border">
+        <div hlmEmptyHeader>
+          <div hlmEmptyMedia variant="icon">
+            <ng-icon name="lucideFileQuestion" aria-hidden="true" />
+          </div>
+          <h1 hlmEmptyTitle>Note introuvable</h1>
+          <p hlmEmptyDescription>Elle a peut-être été supprimée, ou l'adresse est incorrecte.</p>
+        </div>
+      </div>
+    }
+
+    @case ('error') {
+      <div hlmAlert variant="destructive">
+        <ng-icon name="lucideCircleAlert" aria-hidden="true" />
+        <h1 hlmAlertTitle>Impossible de charger la note.</h1>
+        <p hlmAlertDescription>
+          Vérifie que le back Spring est démarré (port 8080), puis recharge la page.
+        </p>
+      </div>
+    }
+  }
+</div>
