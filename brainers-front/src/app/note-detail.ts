@@ -1,19 +1,13 @@
 import { isPlatformBrowser } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
-import {
-  ChangeDetectorRef,
-  Component,
-  OnInit,
-  PLATFORM_ID,
-  inject,
-  signal,
-} from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
+import { FormField, FormRoot, form } from '@angular/forms/signals';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NoteRequest, NotesService, NoteResponse } from './notes.service';
+import { firstValueFrom } from 'rxjs';
+import { noteSchema, toNoteRequest } from './note-form';
+import { NoteRequest, NoteResponse, NotesService, getErrorMessage } from './notes.service';
 
 @Component({
-  imports: [FormsModule, RouterLink],
+  imports: [FormField, FormRoot, RouterLink],
   selector: 'app-note-detail',
   styleUrl: './app.css',
   templateUrl: './note-detail.html',
@@ -23,23 +17,24 @@ export class NoteDetailPage implements OnInit {
   private readonly router = inject(Router);
   private readonly notesService = inject(NotesService);
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
-  note = signal<NoteResponse | null>(null);
-  noteTitle = '';
-  noteContent = '';
-  loading = signal(true);
-  saving = false;
-  deleting = false;
-  editing = signal(false);
-  errorMessage = '';
-  successMessage = '';
+  readonly note = signal<NoteResponse | null>(null);
+  readonly loading = signal(true);
+  readonly editing = signal(false);
+  readonly confirmingDelete = signal(false);
+  readonly deleting = signal(false);
+  readonly errorMessage = signal('');
+  readonly successMessage = signal('');
+
+  readonly editForm = form(signal<NoteRequest>({ title: '', content: '' }), noteSchema, {
+    submission: { action: (field) => this.saveNote(field().value()) },
+  });
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!Number.isSafeInteger(id) || id < 1) {
       this.loading.set(false);
-      this.errorMessage = 'Identifiant de note invalide.';
+      this.errorMessage.set('Identifiant de note invalide.');
       return;
     }
 
@@ -53,108 +48,77 @@ export class NoteDetailPage implements OnInit {
     if (!note) {
       return;
     }
-    this.noteTitle = note.title;
-    this.noteContent = note.content;
+    this.editForm().reset({ title: note.title, content: note.content });
     this.editing.set(true);
-    this.errorMessage = '';
-    this.successMessage = '';
+    this.confirmingDelete.set(false);
+    this.clearMessages();
   }
 
   cancelEdit(): void {
     this.editing.set(false);
-    this.noteTitle = '';
-    this.noteContent = '';
   }
 
-  saveNote(): void {
-    const note = this.note();
-    if (!note || this.saving) {
-      return;
-    }
-    const request: NoteRequest = {
-      title: this.noteTitle.trim(),
-      content: this.noteContent.trim(),
-    };
-    if (!request.title || !request.content) {
-      return;
-    }
+  askDeleteConfirmation(): void {
+    this.confirmingDelete.set(true);
+    this.clearMessages();
+  }
 
-    this.saving = true;
-    this.errorMessage = '';
-    this.successMessage = '';
-    this.notesService.update(note.id, request).subscribe({
-      next: (note) => {
-        this.note.set(note);
-        this.editing.set(false);
-        this.saving = false;
-        this.successMessage = 'Note modifiée.';
-        this.changeDetectorRef.markForCheck();
-      },
-      error: (error: unknown) => {
-        this.errorMessage = this.getErrorMessage(error);
-        this.saving = false;
-        this.changeDetectorRef.markForCheck();
-      },
-    });
+  cancelDelete(): void {
+    this.confirmingDelete.set(false);
   }
 
   deleteNote(): void {
     const note = this.note();
-    if (!note || this.deleting) {
+    if (!note || this.deleting()) {
       return;
     }
 
-    this.deleting = true;
-    this.errorMessage = '';
-    this.successMessage = '';
+    this.deleting.set(true);
+    this.clearMessages();
     this.notesService.delete(note.id).subscribe({
-      next: () => {
-        this.note.set(null);
-        this.deleting = false;
-        void this.router.navigate(['/']);
-      },
+      next: () => void this.router.navigate(['/']),
       error: (error: unknown) => {
-        this.errorMessage = this.getErrorMessage(error);
-        this.deleting = false;
-        this.changeDetectorRef.markForCheck();
+        this.errorMessage.set(getErrorMessage(error));
+        this.deleting.set(false);
+        this.confirmingDelete.set(false);
       },
     });
+  }
+
+  private async saveNote(value: NoteRequest): Promise<void> {
+    const note = this.note();
+    if (!note) {
+      return;
+    }
+
+    this.clearMessages();
+    try {
+      const updated = await firstValueFrom(this.notesService.update(note.id, toNoteRequest(value)));
+      this.note.set(updated);
+      this.editing.set(false);
+      this.successMessage.set('Note modifiée.');
+    } catch (error) {
+      this.errorMessage.set(getErrorMessage(error));
+    }
   }
 
   private loadNote(id: number): void {
     this.loading.set(true);
-    this.errorMessage = '';
+    this.errorMessage.set('');
     this.notesService.getById(id).subscribe({
       next: (note) => {
         this.note.set(note);
         this.loading.set(false);
-        this.changeDetectorRef.markForCheck();
       },
       error: (error: unknown) => {
-        this.errorMessage = this.getErrorMessage(error);
+        this.errorMessage.set(getErrorMessage(error));
         this.loading.set(false);
-        this.changeDetectorRef.markForCheck();
       },
     });
   }
 
-  private getErrorMessage(error: unknown): string {
-    if (error instanceof HttpErrorResponse) {
-      if (typeof error.error === 'string' && error.error.trim()) {
-        return error.error;
-      }
-      if (
-        typeof error.error === 'object' &&
-        error.error !== null &&
-        'message' in error.error &&
-        typeof error.error.message === 'string'
-      ) {
-        return error.error.message;
-      }
-      return error.status === 0
-        ? 'Le serveur est injoignable. Vérifie que le back est lancé sur le port 8080.'
-        : `Erreur du serveur (${error.status}).`;
-    }
-    return 'Une erreur inattendue est survenue.';
+  private clearMessages(): void {
+    this.errorMessage.set('');
+    this.successMessage.set('');
   }
 }

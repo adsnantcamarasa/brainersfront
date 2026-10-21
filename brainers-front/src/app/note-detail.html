@@ -5,11 +5,11 @@
     <h1>Détail de la note</h1>
   </header>
 
-  @if (errorMessage) {
-    <p class="message message-error" role="alert">{{ errorMessage }}</p>
+  @if (errorMessage()) {
+    <p class="message message-error" role="alert">{{ errorMessage() }}</p>
   }
-  @if (successMessage) {
-    <p class="message message-success" role="status">{{ successMessage }}</p>
+  @if (successMessage()) {
+    <p class="message message-success" role="status">{{ successMessage() }}</p>
   }
   @if (loading()) {
     <p class="empty-state" role="status">Chargement de la note...</p>
@@ -18,33 +18,26 @@
       @if (editing()) {
         <p class="eyebrow">Modification</p>
         <h2 id="note-heading">Modifier la note</h2>
-        <form class="note-form" (ngSubmit)="saveNote()">
+        <form class="note-form" [formRoot]="editForm">
           <label for="edit-note-title">Titre</label>
-          <input
-            #titleInput
-            id="edit-note-title"
-            type="text"
-            name="noteTitle"
-            [value]="noteTitle"
-            (input)="noteTitle = titleInput.value"
-            required
-            maxlength="200"
-          />
+          <input id="edit-note-title" type="text" [formField]="editForm.title" />
+          @if (editForm.title().touched() && editForm.title().invalid()) {
+            <p class="field-error">Le titre est obligatoire (200 caractères maximum).</p>
+          }
 
           <label for="edit-note-content">Contenu</label>
-          <textarea
-            #contentInput
-            id="edit-note-content"
-            name="noteContent"
-            [value]="noteContent"
-            (input)="noteContent = contentInput.value"
-            required
-            rows="10"
-          ></textarea>
+          <textarea id="edit-note-content" rows="10" [formField]="editForm.content"></textarea>
+          @if (editForm.content().touched() && editForm.content().invalid()) {
+            <p class="field-error">Le contenu est obligatoire.</p>
+          }
 
           <div class="form-actions">
-            <button class="button button-primary" type="submit" [disabled]="saving">
-              {{ saving ? 'Enregistrement...' : 'Enregistrer les modifications' }}
+            <button
+              class="button button-primary"
+              type="submit"
+              [disabled]="editForm().submitting()"
+            >
+              {{ editForm().submitting() ? 'Enregistrement...' : 'Enregistrer les modifications' }}
             </button>
             <button class="button button-secondary" type="button" (click)="cancelEdit()">
               Annuler
@@ -57,24 +50,43 @@
             <p class="eyebrow">Note #{{ currentNote.id }}</p>
             <h2 id="note-heading">{{ currentNote.title }}</h2>
           </div>
-          <div class="note-actions" aria-label="Actions sur cette note">
-            <button
-              class="button button-primary"
-              type="button"
-              aria-label="Modifier cette note"
-              (click)="editNote()"
-            >
-              Modifier
-            </button>
-            <button
-              class="button button-danger"
-              type="button"
-              aria-label="Supprimer cette note"
-              [disabled]="deleting"
-              (click)="deleteNote()"
-            >
-              {{ deleting ? 'Suppression...' : 'Supprimer' }}
-            </button>
+          <div class="note-actions" role="group" aria-label="Actions sur cette note">
+            @if (confirmingDelete()) {
+              <span class="confirm-text">Supprimer définitivement ?</span>
+              <button
+                class="button button-danger"
+                type="button"
+                [disabled]="deleting()"
+                (click)="deleteNote()"
+              >
+                {{ deleting() ? 'Suppression...' : 'Confirmer la suppression' }}
+              </button>
+              <button
+                class="button button-secondary"
+                type="button"
+                [disabled]="deleting()"
+                (click)="cancelDelete()"
+              >
+                Annuler
+              </button>
+            } @else {
+              <button
+                class="button button-primary"
+                type="button"
+                aria-label="Modifier cette note"
+                (click)="editNote()"
+              >
+                Modifier
+              </button>
+              <button
+                class="button button-danger"
+                type="button"
+                aria-label="Supprimer cette note"
+                (click)="askDeleteConfirmation()"
+              >
+                Supprimer
+              </button>
+            }
           </div>
         </div>
         <p class="detail-content">{{ currentNote.content }}</p>
@@ -82,7 +94,7 @@
     </section>
   } @else {
     <section class="detail-card">
-      <p>Cette note n’existe plus.</p>
+      <p>Cette note est introuvable.</p>
       <a class="button button-secondary" routerLink="/">Retour aux notes</a>
     </section>
   }

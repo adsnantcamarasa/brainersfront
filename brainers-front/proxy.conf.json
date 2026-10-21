@@ -1,10 +1,9 @@
 {
-  "/notes": {
+  "/api": {
     "target": "http://localhost:8080",
-    "secure": false
-  },
-  "/notes/**": {
-    "target": "http://localhost:8080",
-    "secure": false
+    "secure": false,
+    "pathRewrite": {
+      "^/api": ""
+    }
   }
 }

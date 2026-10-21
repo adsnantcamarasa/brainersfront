@@ -1,18 +1,13 @@
 import { isPlatformBrowser } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
-import {
-  ChangeDetectorRef,
-  Component,
-  OnInit,
-  PLATFORM_ID,
-  inject,
-} from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
+import { FormField, FormRoot, form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
-import { NoteRequest, NotesService, NoteResponse } from './notes.service';
+import { firstValueFrom } from 'rxjs';
+import { noteSchema, toNoteRequest } from './note-form';
+import { NoteRequest, NoteResponse, NotesService, getErrorMessage } from './notes.service';
 
 @Component({
-  imports: [FormsModule, RouterLink],
+  imports: [FormField, FormRoot, RouterLink],
   selector: 'app-notes-list',
   styleUrl: './app.css',
   templateUrl: './notes-list.html',
@@ -21,16 +16,18 @@ export class NotesListPage implements OnInit {
   private readonly notesService = inject(NotesService);
   private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
-  notes: NoteResponse[] = [];
-  searchTitle = '';
-  noteTitle = '';
-  noteContent = '';
-  loading = false;
-  saving = false;
-  errorMessage = '';
-  successMessage = '';
+  readonly notes = signal<NoteResponse[]>([]);
+  readonly loading = signal(false);
+  readonly errorMessage = signal('');
+
+  readonly searchForm = form(signal({ title: '' }), {
+    submission: { action: async (field) => this.loadNotes(field.title().value().trim()) },
+  });
+
+  readonly createForm = form(signal<NoteRequest>({ title: '', content: '' }), noteSchema, {
+    submission: { action: (field) => this.createNote(field().value()) },
+  });
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
@@ -38,72 +35,28 @@ export class NotesListPage implements OnInit {
     }
   }
 
-  searchNotes(): void {
-    this.loadNotes(this.searchTitle.trim());
-  }
-
-  saveNote(): void {
-    const request: NoteRequest = {
-      title: this.noteTitle.trim(),
-      content: this.noteContent.trim(),
-    };
-    if (!request.title || !request.content || this.saving) {
-      return;
+  private async createNote(value: NoteRequest): Promise<void> {
+    this.errorMessage.set('');
+    try {
+      const note = await firstValueFrom(this.notesService.create(toNoteRequest(value)));
+      await this.router.navigate(['/notes', note.id]);
+    } catch (error) {
+      this.errorMessage.set(getErrorMessage(error));
     }
-
-    this.saving = true;
-    this.errorMessage = '';
-    this.successMessage = '';
-    this.notesService.create(request).subscribe({
-      next: (note) => {
-        this.saving = false;
-        this.noteTitle = '';
-        this.noteContent = '';
-        this.changeDetectorRef.markForCheck();
-        void this.router.navigate(['/notes', note.id]);
-      },
-      error: (error: unknown) => {
-        this.errorMessage = this.getErrorMessage(error);
-        this.saving = false;
-        this.changeDetectorRef.markForCheck();
-      },
-    });
   }
 
   private loadNotes(title = ''): void {
-    this.loading = true;
-    this.errorMessage = '';
+    this.loading.set(true);
+    this.errorMessage.set('');
     this.notesService.getAll(title).subscribe({
       next: (notes) => {
-        this.notes = notes;
-        this.loading = false;
-        this.changeDetectorRef.markForCheck();
+        this.notes.set(notes);
+        this.loading.set(false);
       },
       error: (error: unknown) => {
-        this.errorMessage = this.getErrorMessage(error);
-        this.loading = false;
-        this.changeDetectorRef.markForCheck();
+        this.errorMessage.set(getErrorMessage(error));
+        this.loading.set(false);
       },
     });
-  }
-
-  private getErrorMessage(error: unknown): string {
-    if (error instanceof HttpErrorResponse) {
-      if (typeof error.error === 'string' && error.error.trim()) {
-        return error.error;
-      }
-      if (
-        typeof error.error === 'object' &&
-        error.error !== null &&
-        'message' in error.error &&
-        typeof error.error.message === 'string'
-      ) {
-        return error.error.message;
-      }
-      return error.status === 0
-        ? 'Le serveur est injoignable. Vérifie que le back est lancé sur le port 8080.'
-        : `Erreur du serveur (${error.status}).`;
-    }
-    return 'Une erreur inattendue est survenue.';
   }
 }

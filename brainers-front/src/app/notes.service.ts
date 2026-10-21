@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface NoteRequest {
@@ -16,7 +16,9 @@ export interface NoteResponse extends NoteRequest {
 })
 export class NotesService {
   private readonly http = inject(HttpClient);
-  private readonly endpoint = '/notes';
+  // Prefixed with /api so API calls never collide with the /notes/:id front route;
+  // the dev proxy strips the prefix before forwarding to the backend.
+  private readonly endpoint = '/api/notes';
 
   getAll(title = ''): Observable<NoteResponse[]> {
     let params = new HttpParams();
@@ -41,4 +43,24 @@ export class NotesService {
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.endpoint}/${id}`);
   }
+}
+
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof HttpErrorResponse) {
+    if (typeof error.error === 'string' && error.error.trim()) {
+      return error.error;
+    }
+    if (
+      typeof error.error === 'object' &&
+      error.error !== null &&
+      'message' in error.error &&
+      typeof error.error.message === 'string'
+    ) {
+      return error.error.message;
+    }
+    return error.status === 0
+      ? 'Le serveur est injoignable. Vérifie que le back est lancé sur le port 8080.'
+      : `Erreur du serveur (${error.status}).`;
+  }
+  return 'Une erreur inattendue est survenue.';
 }

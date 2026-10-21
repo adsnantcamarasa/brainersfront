@@ -172,17 +172,13 @@ textarea {
 }
 
 .note-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 0.5rem;
   border: 1px solid #eceef2;
   border-radius: 0.75rem;
   padding: 1rem;
 }
 
 .note-card-select {
-  min-width: 0;
+  display: block;
   border: 0;
   padding: 0;
   background: transparent;
@@ -218,37 +214,10 @@ textarea {
   gap: 0.4rem;
 }
 
-.icon-button {
-  display: grid;
-  width: 2.4rem;
-  height: 2.4rem;
-  flex: 0 0 auto;
-  place-items: center;
-  border: 0;
-  border-radius: 0.6rem;
-  color: #5147c9;
-  background: #f0efff;
-  cursor: pointer;
-}
-
-.icon-button:disabled {
-  cursor: wait;
-  opacity: 0.6;
-}
-
-.icon-button-danger {
-  color: #b42318;
-  background: #fff0ef;
-}
-
-.icon-button svg {
-  width: 1.15rem;
-  height: 1.15rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.7;
+.confirm-text {
+  color: #8f1d16;
+  font-size: 0.9rem;
+  font-weight: 650;
 }
 
 .empty-state {
@@ -287,6 +256,12 @@ textarea {
   color: #374151;
   font-size: 0.9rem;
   font-weight: 650;
+}
+
+.field-error {
+  margin: 0;
+  color: #b42318;
+  font-size: 0.85rem;
 }
 
 .form-actions {
