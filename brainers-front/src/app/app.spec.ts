@@ -50,18 +50,27 @@ describe('App', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    const editButton = fixture.nativeElement.querySelector(
+    const detailCard = fixture.nativeElement.querySelector('.detail-card') as HTMLElement;
+    const editButton = detailCard.querySelector(
       '[aria-label="Modifier cette note"]',
     ) as HTMLButtonElement;
     expect(editButton).toBeTruthy();
     expect(
-      fixture.nativeElement.querySelector('[aria-label="Supprimer cette note"]'),
+      detailCard.querySelector('[aria-label="Supprimer cette note"]'),
     ).toBeTruthy();
 
     editButton.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
     expect(fixture.componentInstance.editingNoteId).toBe(note.id);
     expect(fixture.componentInstance.noteTitle).toBe(note.title);
     expect(fixture.componentInstance.noteContent).toBe(note.content);
+    expect(
+      (fixture.nativeElement.querySelector('#note-title') as HTMLInputElement).value,
+    ).toBe(note.title);
+    expect(
+      (fixture.nativeElement.querySelector('#note-content') as HTMLTextAreaElement).value,
+    ).toBe(note.content);
   });
 
   it('deletes the selected note from the delete icon', async () => {
@@ -77,9 +86,10 @@ describe('App', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    (fixture.nativeElement.querySelector(
-      '[aria-label="Supprimer cette note"]',
-    ) as HTMLButtonElement).click();
+    const deleteButton = fixture.nativeElement.querySelector(
+      '.detail-card [aria-label="Supprimer cette note"]',
+    ) as HTMLButtonElement;
+    deleteButton.click();
     httpTestingController.expectOne({ method: 'DELETE', url: '/notes/1' }).flush(null);
     httpTestingController.expectOne('/notes').flush([]);
 
