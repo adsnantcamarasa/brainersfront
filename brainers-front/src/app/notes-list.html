@@ -1,0 +1,91 @@
+<main class="page">
+  <header class="page-header">
+    <p class="eyebrow">Brainers</p>
+    <h1>Mes notes</h1>
+    <p class="subtitle">Crée, retrouve et organise tes notes.</p>
+  </header>
+
+  @if (errorMessage) {
+    <p class="message message-error" role="alert">{{ errorMessage }}</p>
+  }
+  @if (successMessage) {
+    <p class="message message-success" role="status">{{ successMessage }}</p>
+  }
+
+  <section class="workspace" aria-label="Gestion des notes">
+    <section class="notes-panel" aria-labelledby="notes-heading">
+      <div class="section-heading">
+        <div>
+          <h2 id="notes-heading">Notes enregistrées</h2>
+          <p class="muted">Ouvre une note pour la consulter ou la modifier.</p>
+        </div>
+        <span class="note-count">{{ notes.length }}</span>
+      </div>
+
+      <form class="search-form" (ngSubmit)="searchNotes()">
+        <label class="visually-hidden" for="search-title">Rechercher par titre</label>
+        <input
+          id="search-title"
+          type="search"
+          name="searchTitle"
+          [(ngModel)]="searchTitle"
+          placeholder="Rechercher par titre..."
+        />
+        <button class="button button-secondary" type="submit" [disabled]="loading">
+          Rechercher
+        </button>
+      </form>
+
+      @if (loading) {
+        <p class="empty-state" role="status">Chargement des notes...</p>
+      } @else if (notes.length === 0) {
+        <p class="empty-state">Aucune note trouvée. Tu peux en créer une à droite.</p>
+      } @else {
+        <ul class="note-list">
+          @for (note of notes; track note.id) {
+            <li class="note-card">
+              <a class="note-card-select" [routerLink]="['/notes', note.id]">
+                <span class="note-title">{{ note.title }}</span>
+                <span class="note-preview">{{ note.content }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="form-panel" aria-labelledby="form-heading">
+      <p class="eyebrow">Nouvelle note</p>
+      <h2 id="form-heading">Créer une note</h2>
+
+      <form class="note-form" (ngSubmit)="saveNote()">
+        <label for="note-title">Titre</label>
+        <input
+          id="note-title"
+          type="text"
+          name="noteTitle"
+          [(ngModel)]="noteTitle"
+          required
+          maxlength="200"
+          placeholder="Le titre de ta note"
+        />
+
+        <label for="note-content">Contenu</label>
+        <textarea
+          id="note-content"
+          name="noteContent"
+          [(ngModel)]="noteContent"
+          required
+          rows="8"
+          placeholder="Écris ta note ici..."
+        ></textarea>
+
+        <div class="form-actions">
+          <button class="button button-primary" type="submit" [disabled]="saving">
+            {{ saving ? 'Enregistrement...' : 'Créer la note' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </section>
+</main>

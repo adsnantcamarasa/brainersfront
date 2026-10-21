@@ -20,6 +20,14 @@
   margin-bottom: 2rem;
 }
 
+.back-link {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  color: #5147c9;
+  font-weight: 650;
+  text-decoration: none;
+}
+
 .eyebrow {
   margin: 0 0 0.45rem;
   color: #6259d9;
@@ -168,11 +176,6 @@ textarea {
   padding: 1rem;
 }
 
-.note-card-selected {
-  border-color: #a9a3f0;
-  background: #fbfaff;
-}
-
 .note-card-select {
   min-width: 0;
   border: 0;
@@ -181,10 +184,6 @@ textarea {
   color: inherit;
   cursor: pointer;
   text-align: left;
-}
-
-.note-card-select:disabled {
-  cursor: wait;
 }
 
 .note-title {
@@ -245,13 +244,6 @@ textarea {
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.7;
-}
-
-.loading-note {
-  display: block;
-  margin-top: 0.5rem;
-  color: #6259d9;
-  font-size: 0.8rem;
 }
 
 .empty-state {
