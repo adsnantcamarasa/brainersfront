@@ -31,7 +31,6 @@
 
 h1,
 h2,
-h3,
 p {
   margin-top: 0;
 }
@@ -47,12 +46,6 @@ h2 {
   margin-bottom: 0.4rem;
   color: #172033;
   font-size: 1.2rem;
-}
-
-h3 {
-  margin-bottom: 0.5rem;
-  color: #172033;
-  font-size: 1rem;
 }
 
 .subtitle,
@@ -140,7 +133,6 @@ textarea {
   font: inherit;
   font-size: 0.88rem;
   font-weight: 650;
-  transition: background-color 120ms ease, color 120ms ease;
 }
 
 .button:disabled {
@@ -153,36 +145,9 @@ textarea {
   background: #5147c9;
 }
 
-.button-primary:hover:not(:disabled) {
-  background: #4338ad;
-}
-
 .button-secondary {
   color: #374151;
   background: #f3f4f6;
-}
-
-.button-secondary:hover:not(:disabled),
-.button-quiet:hover:not(:disabled) {
-  background: #e8e7fb;
-}
-
-.button-quiet {
-  min-height: 2.2rem;
-  padding: 0.45rem 0.6rem;
-  color: #5147c9;
-  background: transparent;
-}
-
-.button-danger {
-  min-height: 2.2rem;
-  padding: 0.45rem 0.6rem;
-  color: #b42318;
-  background: #fff5f4;
-}
-
-.button-danger:hover:not(:disabled) {
-  background: #ffe4e1;
 }
 
 .note-list {
@@ -195,14 +160,45 @@ textarea {
 
 .note-card {
   display: grid;
-  gap: 0.85rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.5rem;
   border: 1px solid #eceef2;
   border-radius: 0.75rem;
   padding: 1rem;
 }
 
-.note-card-copy p,
+.note-card-selected {
+  border-color: #a9a3f0;
+  background: #fbfaff;
+}
+
+.note-card-select {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.note-card-select:disabled {
+  cursor: wait;
+}
+
+.note-title {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #172033;
+  font-size: 1rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.note-preview,
 .detail-content {
+  display: block;
   margin-bottom: 0;
   color: #596273;
   line-height: 1.6;
@@ -216,6 +212,46 @@ textarea {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.4rem;
+}
+
+.icon-button {
+  display: grid;
+  width: 2.4rem;
+  height: 2.4rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 0.6rem;
+  color: #5147c9;
+  background: #f0efff;
+  cursor: pointer;
+}
+
+.icon-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.icon-button-danger {
+  color: #b42318;
+  background: #fff0ef;
+}
+
+.icon-button svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.loading-note {
+  display: block;
+  margin-top: 0.5rem;
+  color: #6259d9;
+  font-size: 0.8rem;
 }
 
 .empty-state {
