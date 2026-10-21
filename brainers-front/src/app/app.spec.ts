@@ -47,8 +47,10 @@ describe('Notes routes', () => {
     expect(router.url).toBe('/notes/1');
     expect(detail.querySelector('h2')?.textContent).toContain(note.title);
     expect(detail.querySelector('.detail-content')?.textContent).toContain(note.content);
-    expect(detail.querySelector('[aria-label="Modifier cette note"]')).toBeTruthy();
-    expect(detail.querySelector('[aria-label="Supprimer cette note"]')).toBeTruthy();
+    expect(detail.querySelector('[aria-label="Modifier cette note"]')?.textContent?.trim())
+      .toBe('Modifier');
+    expect(detail.querySelector('[aria-label="Supprimer cette note"]')?.textContent?.trim())
+      .toBe('Supprimer');
   });
 
   it('prefills title and content in the edit form on the detail route', async () => {
