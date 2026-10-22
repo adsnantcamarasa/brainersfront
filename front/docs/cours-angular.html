@@ -1,0 +1,2040 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Angular avec Brainers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,400..600&display=swap">
+<style>
+/* Mise en page : un manuel technique. Sommaire collant à gauche, colonne de lecture d'environ 68 caractères,
+   blocs de code et schémas dans la même colonne avec leur propre défilement horizontal. */
+:root {
+  --bg: #f4f5f8;
+  --surface: #ffffff;
+  --ink: #151922;
+  --muted: #586073;
+  --line: #dce0e8;
+  --accent: #b3214a;
+  --accent-soft: #fbe8ee;
+  --java: #1b6683;
+  --java-soft: #e3f1f6;
+  --warn: #855700;
+  --warn-soft: #fbf1d9;
+  --code-bg: #eceef3;
+  --code-ink: #1b2130;
+  --tk-key: #a31d47;
+  --tk-str: #2c6b3b;
+  --tk-com: #737b8e;
+  --tk-title: #1a5a86;
+  --tk-attr: #8a4708;
+  --tk-num: #6a3ca0;
+
+  --f-display: "Bricolage Grotesque", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --step--1: 0.875rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.25rem;
+  --step-2: 1.6rem;
+  --step-3: clamp(1.75rem, 1.2rem + 1.8vw, 2.35rem);
+  --step-4: clamp(2.3rem, 1.4rem + 3.4vw, 3.6rem);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1117; --surface: #151a22; --ink: #e5e8ee; --muted: #9aa2b3; --line: #29303c;
+    --accent: #ff7393; --accent-soft: #3a1621; --java: #6cc2df; --java-soft: #0f2833;
+    --warn: #efbb5a; --warn-soft: #30250e; --code-bg: #0a0d12; --code-ink: #dbe1ea;
+    --tk-key: #ff86a3; --tk-str: #8fd6a0; --tk-com: #7c8699; --tk-title: #7fc6f0; --tk-attr: #efb36c; --tk-num: #c7a3ff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1117; --surface: #151a22; --ink: #e5e8ee; --muted: #9aa2b3; --line: #29303c;
+  --accent: #ff7393; --accent-soft: #3a1621; --java: #6cc2df; --java-soft: #0f2833;
+  --warn: #efbb5a; --warn-soft: #30250e; --code-bg: #0a0d12; --code-ink: #dbe1ea;
+  --tk-key: #ff86a3; --tk-str: #8fd6a0; --tk-com: #7c8699; --tk-title: #7fc6f0; --tk-attr: #efb36c; --tk-num: #c7a3ff;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: var(--step-0);
+  line-height: 1.65;
+}
+.shell {
+  max-width: 1220px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 2.5rem 5rem;
+}
+a { color: var(--accent); text-underline-offset: 0.18em; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3, h4 { font-family: var(--f-display); line-height: 1.15; text-wrap: balance; margin: 0; }
+p { margin: 0; }
+strong { font-weight: 600; }
+code { font-family: var(--f-mono); font-size: 0.84em; background: var(--code-bg); color: var(--code-ink); padding: 0.08em 0.36em; border-radius: 4px; overflow-wrap: break-word; }
+kbd { font-family: var(--f-mono); font-size: 0.8em; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 0.35em; background: var(--surface); }
+
+/* ---------- En-tête ---------- */
+.masthead { display: grid; gap: 1.4rem; padding-bottom: 2.5rem; border-bottom: 1px solid var(--line); margin-bottom: 2.5rem; }
+.eyebrow { font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.masthead h1 { font-size: var(--step-4); font-weight: 750; letter-spacing: -0.025em; max-width: 16ch; }
+.lede { font-size: var(--step-1); line-height: 1.55; max-width: 60ch; color: var(--ink); }
+.chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.chip { font-family: var(--f-display); font-size: 0.82rem; border: 1px solid var(--line); background: var(--surface); padding: 0.2rem 0.65rem; border-radius: 999px; color: var(--muted); }
+.routemap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; font-family: var(--f-mono); font-size: 0.85rem; }
+.routemap .r { background: var(--surface); border: 1px solid var(--line); padding: 0.35rem 0.7rem; border-radius: 6px; display: inline-flex; flex-direction: column; line-height: 1.3; }
+.routemap .r small { font-family: var(--f-display); color: var(--muted); font-size: 0.75rem; }
+.routemap .arrow { color: var(--muted); }
+.howto { display: grid; gap: 0.4rem; max-width: 62ch; color: var(--muted); font-size: 0.98rem; }
+
+/* ---------- Grille principale ---------- */
+.layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 3.5rem; align-items: start; }
+.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1.25rem); max-height: calc(100vh - 2.5rem); overflow-y: auto; font-family: var(--f-display); font-size: 0.9rem; padding-right: 0.25rem; }
+.toc summary { cursor: pointer; font-weight: 650; padding: 0.6rem 0; list-style: none; display: flex; justify-content: space-between; }
+.toc summary::-webkit-details-marker { display: none; }
+.toc summary::after { content: "+"; color: var(--muted); }
+.toc details[open] summary::after { content: "–"; }
+.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.1rem; counter-reset: toc; }
+.toc li a { display: grid; grid-template-columns: 2ch 1fr; gap: 0.5rem; padding: 0.3rem 0.5rem; border-radius: 6px; color: var(--muted); text-decoration: none; line-height: 1.3; }
+.toc li a .n { font-family: var(--f-mono); font-size: 0.75rem; padding-top: 0.12rem; text-align: right; }
+.toc li a:hover { color: var(--ink); background: var(--surface); }
+.toc li a.current { color: var(--ink); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.toc li a.current .n { color: var(--accent); }
+main { min-width: 0; max-width: 47rem; }
+@media (max-width: 980px) {
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+  .toc { position: static; max-height: none; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 0 0.9rem 0.4rem; }
+  main { max-width: none; }
+}
+@media (min-width: 981px) { .toc summary { display: none; } }
+
+/* ---------- Chapitres ---------- */
+.chapter { padding-block: 1rem 3rem; border-bottom: 1px solid var(--line); margin-bottom: 2.5rem; display: grid; gap: 1.15rem; scroll-margin-top: 1rem; }
+.chapter:last-child { border-bottom: 0; }
+.chapter > header { display: grid; gap: 0.5rem; margin-bottom: 0.4rem; }
+.chapter h2 { font-size: var(--step-3); font-weight: 720; letter-spacing: -0.015em; }
+.chapter .intro { font-size: 1.12rem; color: var(--muted); max-width: 62ch; }
+.chapter h3 { font-size: var(--step-1); font-weight: 680; margin-top: 1.1rem; scroll-margin-top: 1rem; }
+.chapter h4 { font-size: 1rem; font-weight: 680; margin-top: 0.4rem; }
+.chapter ul, .chapter ol { margin: 0; padding-left: 1.3rem; display: grid; gap: 0.35rem; }
+.chapter li::marker { color: var(--muted); }
+
+/* ---------- Encadrés ---------- */
+.callout { border-radius: 8px; padding: 0.9rem 1.1rem; display: grid; gap: 0.4rem; background: var(--accent-soft); }
+.callout .lbl { font-family: var(--f-display); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); }
+.callout.java { background: var(--java-soft); }
+.callout.java .lbl { color: var(--java); }
+.callout.trap { background: var(--warn-soft); }
+.callout.trap .lbl { color: var(--warn); }
+.callout code { background: var(--surface); }
+
+/* ---------- Code ---------- */
+figure { margin: 0; }
+figure.code { border: 1px solid var(--line); border-radius: 8px; background: var(--code-bg); overflow: hidden; min-width: 0; }
+figure.code figcaption { font-family: var(--f-mono); font-size: 0.72rem; color: var(--muted); padding: 0.45rem 0.9rem; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 1rem; }
+figure.code figcaption .lang { text-transform: uppercase; letter-spacing: 0.06em; }
+figure.code pre { margin: 0; padding: 0.85rem 1rem; overflow-x: auto; font-family: var(--f-mono); font-size: 0.8rem; line-height: 1.6; color: var(--code-ink); tab-size: 2; }
+figure.code pre code { background: none; padding: 0; font-size: inherit; color: inherit; overflow-wrap: normal; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 0.9rem; }
+.pair > * { min-width: 0; }
+.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-doctag { color: var(--tk-key); }
+.hljs-string, .hljs-regexp, .hljs-template-tag { color: var(--tk-str); }
+.hljs-comment, .hljs-quote { color: var(--tk-com); font-style: italic; }
+.hljs-title, .hljs-name, .hljs-section, .hljs-selector-id, .hljs-tag { color: var(--tk-title); }
+.hljs-attr, .hljs-attribute, .hljs-selector-class, .hljs-property, .hljs-meta { color: var(--tk-attr); }
+.hljs-number, .hljs-built_in, .hljs-type, .hljs-symbol, .hljs-variable.language_ { color: var(--tk-num); }
+.hljs-title.function_, .hljs-title.class_ { color: var(--tk-title); font-weight: 600; }
+
+/* ---------- Tableaux ---------- */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-family: var(--f-display); font-size: 0.9rem; line-height: 1.45; }
+th, td { text-align: left; vertical-align: top; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+thead th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 650; background: var(--bg); }
+td code { font-size: 0.8rem; }
+
+/* ---------- Schémas ---------- */
+.chapter .flow { list-style: none; padding: 0; margin: 0; display: grid; gap: 1.2rem; }
+.flow > li { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0.7rem 0.95rem; display: grid; gap: 0.2rem; }
+.flow > li + li::before { content: "↓"; position: absolute; top: -1.15rem; left: 1.4rem; font-family: var(--f-mono); color: var(--muted); font-size: 0.85rem; line-height: 1; }
+.flow .tier { font-family: var(--f-mono); font-size: 0.68rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--accent); }
+.flow .what { font-family: var(--f-display); font-weight: 650; }
+.flow .detail { font-size: 0.95rem; color: var(--muted); }
+.compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; }
+.compare > section { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 1rem 1.1rem; display: grid; gap: 0.6rem; align-content: start; }
+.compare h4 { margin: 0; }
+.compare ol { font-size: 0.95rem; }
+.tree { font-family: var(--f-mono); font-size: 0.78rem; line-height: 1.65; }
+.tree .c { color: var(--tk-com); }
+.tree .d { color: var(--tk-title); font-weight: 600; }
+.layers { display: grid; gap: 0.5rem; font-family: var(--f-display); }
+.layers > div { display: grid; grid-template-columns: minmax(7rem, 9rem) 1fr; gap: 0.75rem; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0.6rem 0.9rem; }
+.layers b { font-family: var(--f-mono); font-size: 0.85rem; color: var(--accent); }
+.layers span { font-size: 0.92rem; color: var(--muted); }
+.layers .down { border: 0; background: none; padding: 0 0.9rem; color: var(--muted); font-family: var(--f-mono); font-size: 0.78rem; }
+
+/* ---------- Captures ---------- */
+.shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; }
+.shots figure { display: grid; gap: 0.45rem; }
+.shots img { display: block; width: 100%; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+.shots figcaption { font-family: var(--f-display); font-size: 0.85rem; color: var(--muted); line-height: 1.4; }
+.shots figcaption b { color: var(--ink); font-weight: 650; }
+
+/* ---------- Explorateur de composants ---------- */
+.explorer { display: grid; grid-template-columns: 16.5rem minmax(0, 1fr); gap: 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 1rem; }
+@media (max-width: 700px) { .explorer { grid-template-columns: minmax(0, 1fr); } }
+.chapter .ex-tree { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.15rem; font-family: var(--f-mono); font-size: 0.8rem; }
+.ex-tree button { width: 100%; text-align: left; background: none; border: 0; color: var(--ink); font: inherit; padding: 0.35rem 0.5rem; border-radius: 6px; cursor: pointer; display: grid; gap: 0.05rem; }
+.ex-tree button .nm { white-space: nowrap; }
+.ex-tree button .k { font-family: var(--f-display); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.ex-tree button:hover { background: var(--bg); }
+.ex-tree button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.ex-tree button[aria-pressed="true"] .k { color: var(--bg); opacity: 0.75; }
+.ex-tree .l1 { padding-left: 1rem; } .ex-tree .l2 { padding-left: 2rem; } .ex-tree .l3 { padding-left: 3rem; }
+.ex-card { display: grid; gap: 0.7rem; align-content: start; min-width: 0; }
+.ex-card h4 { font-size: 1.2rem; font-family: var(--f-mono); font-weight: 600; }
+.ex-card .role { color: var(--muted); }
+.ex-card dl { margin: 0; display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: 0.45rem 0.9rem; font-size: 0.92rem; }
+.ex-card dt { font-family: var(--f-display); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); padding-top: 0.2rem; }
+.ex-card dd { margin: 0; min-width: 0; }
+@media (max-width: 520px) { .ex-card dl { grid-template-columns: minmax(0, 1fr); } .ex-card dt { padding-top: 0.4rem; } }
+
+/* ---------- Pas à pas ---------- */
+.stepper { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 1rem; display: grid; gap: 0.9rem; }
+.scenarios { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.btn { font-family: var(--f-display); font-size: 0.88rem; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 0.45rem 0.85rem; cursor: pointer; }
+.btn:hover { border-color: var(--muted); }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn:disabled { opacity: 0.4; cursor: default; }
+.step-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+.tag { font-family: var(--f-mono); font-size: 0.68rem; letter-spacing: 0.07em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
+.step-file { font-family: var(--f-mono); font-size: 0.75rem; color: var(--muted); overflow-wrap: anywhere; }
+.step-title { font-size: 1.15rem; }
+.step-text { max-width: 62ch; }
+.step-nav { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.dots { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.dots button { width: 1.7rem; height: 1.7rem; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--muted); font-family: var(--f-mono); font-size: 0.7rem; cursor: pointer; padding: 0; }
+.dots button[aria-current="step"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+
+/* ---------- Exercices ---------- */
+.exercise { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 1rem 1.1rem; display: grid; gap: 0.7rem; }
+.exercise .level { font-family: var(--f-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+.exercise details { border-top: 1px solid var(--line); padding-top: 0.6rem; }
+.exercise summary { cursor: pointer; font-family: var(--f-display); font-weight: 650; color: var(--accent); }
+.exercise details > div { display: grid; gap: 0.8rem; margin-top: 0.7rem; }
+
+dl.glossary { margin: 0; display: grid; grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr); border: 1px solid var(--line); border-radius: 8px; background: var(--surface); overflow: hidden; }
+dl.glossary dt, dl.glossary dd { margin: 0; padding: 0.55rem 0.9rem; border-bottom: 1px solid var(--line); }
+dl.glossary dt { font-family: var(--f-display); font-weight: 650; }
+dl.glossary dd { font-size: 0.97rem; }
+dl.glossary dt:last-of-type, dl.glossary dd:last-of-type { border-bottom: 0; }
+@media (max-width: 560px) { dl.glossary { grid-template-columns: minmax(0, 1fr); } dl.glossary dt { border-bottom: 0; padding-bottom: 0; } }
+.footer { color: var(--muted); font-size: 0.92rem; display: grid; gap: 0.4rem; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="masthead">
+    <p class="eyebrow">Cours pratique · dossier front/ du repo brainersfront</p>
+    <h1>Angular avec Brainers</h1>
+    <p class="lede">Tu sais développer, tu n'as jamais touché à Angular. Ce cours part de l'application que tu as sous les yeux et explique chaque idée d'Angular à travers son vrai code : ce que fait Brainers, comment le projet est rangé, où vit la logique métier, et comment le HTML et le CSS s'y accrochent.</p>
+    <div class="chips" aria-label="Technologies">
+      <span class="chip">Angular 22</span><span class="chip">TypeScript 6</span><span class="chip">RxJS 7.8</span><span class="chip">Spartan UI 1.8</span><span class="chip">Tailwind CSS 4</span><span class="chip">Vitest</span>
+    </div>
+    <div class="routemap" aria-label="Les trois écrans de Brainers">
+      <span class="r">/<small>Accueil : rechercher</small></span>
+      <span class="arrow">→</span>
+      <span class="r">/notes/new<small>Créer une note</small></span>
+      <span class="arrow">·</span>
+      <span class="r">/notes/:id<small>Lire, modifier, supprimer</small></span>
+    </div>
+    <div class="howto">
+      <p><strong>Comment lire ce cours.</strong> Ouvre le dossier <code>front/</code> dans VS Code à côté de cette page. Chaque extrait de code indique son fichier : va le lire en entier, le code est commenté.</p>
+      <p>Les chapitres suivent l'ordre dans lequel les notions s'appuient les unes sur les autres. Le chapitre 14 rejoue trois clics étape par étape, et le chapitre 18 te fait coder.</p>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" aria-label="Sommaire">
+      <details id="toc-details" open>
+        <summary>Sommaire</summary>
+        <ol>
+          <li><a href="#brainers"><span class="n">1</span>Ce que fait Brainers</a></li>
+          <li><a href="#angular"><span class="n">2</span>Angular en une page</a></li>
+          <li><a href="#carte"><span class="n">3</span>La carte du projet</a></li>
+          <li><a href="#demarrage"><span class="n">4</span>Du démarrage à l'écran</a></li>
+          <li><a href="#composant"><span class="n">5</span>Le composant</a></li>
+          <li><a href="#template"><span class="n">6</span>Le template</a></li>
+          <li><a href="#signals"><span class="n">7</span>Les signals</a></li>
+          <li><a href="#parent-enfant"><span class="n">8</span>Parents et enfants</a></li>
+          <li><a href="#services"><span class="n">9</span>Services et injection</a></li>
+          <li><a href="#rxjs"><span class="n">10</span>RxJS, le strict nécessaire</a></li>
+          <li><a href="#routeur"><span class="n">11</span>Le routeur</a></li>
+          <li><a href="#formulaires"><span class="n">12</span>Les formulaires</a></li>
+          <li><a href="#etats"><span class="n">13</span>Les états d'un écran</a></li>
+          <li><a href="#pas-a-pas"><span class="n">14</span>Trois clics, pas à pas</a></li>
+          <li><a href="#back"><span class="n">15</span>Le lien avec le back</a></li>
+          <li><a href="#html-css"><span class="n">16</span>HTML et CSS</a></li>
+          <li><a href="#tests"><span class="n">17</span>Les tests</a></li>
+          <li><a href="#exercices"><span class="n">18</span>À toi de jouer</a></li>
+          <li><a href="#deboguer"><span class="n">19</span>Déboguer</a></li>
+          <li><a href="#glossaire"><span class="n">·</span>Glossaire</a></li>
+        </ol>
+      </details>
+    </nav>
+
+    <main>
+
+<!-- =============================== 1 =============================== -->
+<section class="chapter" id="brainers">
+  <header>
+    <p class="eyebrow">Chapitre 1</p>
+    <h2>Ce que fait Brainers</h2>
+    <p class="intro">Avant le code, le métier. Une note a un titre (« Maven ») et un contenu (« Un outil de build… »). On la retrouve par son titre, on la lit, on la corrige, on la supprime.</p>
+  </header>
+
+  <p>Le front Angular ne stocke rien. Il affiche des écrans et envoie des requêtes HTTP. Les notes vivent dans le back Spring (repo <code>brainers</code>, dossier <code>demo/</code>), qui les garde dans une base H2 en mémoire. Au démarrage, le back crée 20 notes de démo.</p>
+
+  <div class="shots">
+    <figure><img src="captures/02-recherche-java.png" alt="Accueil : la barre de recherche contient java, les boutons Rechercher et Créer sont dessous, cinq notes sont listées" width="1280" height="900" loading="lazy"><figcaption><b>Accueil, <code>/</code>.</b> Une barre, « Rechercher » et « Créer ». La recherche part au clic.</figcaption></figure>
+    <figure><img src="captures/05-detail.png" alt="Page de détail de la note Maven, avec ses dates et les boutons Modifier et Supprimer" width="1280" height="900" loading="lazy"><figcaption><b>Détail, <code>/notes/:id</code>.</b> La note, ses dates, et deux options.</figcaption></figure>
+    <figure><img src="captures/08-modification.png" alt="Formulaire Modifier la note, pré-rempli avec le titre Maven" width="1280" height="900" loading="lazy"><figcaption><b>Modifier.</b> Le même formulaire que pour créer, pré-rempli.</figcaption></figure>
+    <figure><img src="captures/09-suppression.png" alt="La carte de la note demande : Supprimer définitivement cette note ?" width="1280" height="900" loading="lazy"><figcaption><b>Supprimer.</b> Une confirmation, dans le pied de la carte.</figcaption></figure>
+  </div>
+
+  <h3>Les parcours de l'utilisateur</h3>
+  <ul>
+    <li><strong>Rechercher.</strong> Taper un mot du titre, cliquer « Rechercher » ou appuyer sur <kbd>Entrée</kbd>. Champ vide : toutes les notes. 10 résultats au maximum.</li>
+    <li><strong>Créer (US-01).</strong> « Créer » ouvre un formulaire. Une fois la note enregistrée, sa page s'ouvre.</li>
+    <li><strong>Consulter (US-03).</strong> Un clic sur un résultat ouvre la note. Une adresse qui ne correspond à rien affiche « Note introuvable ».</li>
+    <li><strong>Modifier (US-04).</strong> « Modifier » remplace la carte par le formulaire pré-rempli. « Enregistrer » affiche la note à jour.</li>
+    <li><strong>Supprimer (US-05).</strong> « Supprimer » demande une confirmation, puis ramène à l'accueil.</li>
+  </ul>
+
+  <h3>Les règles métier, et où elles vivent</h3>
+  <p>Une règle métier est souvent appliquée à deux endroits : dans le front, pour guider l'utilisateur, et dans le back, pour protéger les données.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Règle</th><th>Ce que voit l'utilisateur</th><th>Dans le front</th><th>Dans le back</th></tr></thead>
+      <tbody>
+        <tr><td><b>RG1</b> Titre obligatoire, 100 caractères max, pas uniquement des espaces</td><td>Message sous le champ, « Enregistrer » désactivé</td><td><code>note.rules.ts</code>, validateurs de <code>note-form.ts</code>, <code>not-blank.validator.ts</code></td><td><code>@NotBlank</code> <code>@Size(max = 100)</code> → 400</td></tr>
+        <tr><td><b>RG2</b> Contenu obligatoire, 10 000 caractères max, pas uniquement des espaces</td><td>Idem</td><td>Idem</td><td>Aucune contrainte aujourd'hui</td></tr>
+        <tr><td><b>RG3</b> Le client n'envoie ni id ni dates</td><td>Rien</td><td><code>NoteRequest</code> = titre + contenu</td><td>Génère <code>id</code>, <code>createdAt</code>, <code>lastUpdateAt</code></td></tr>
+        <tr><td>Titre unique</td><td>« Une note porte déjà ce titre. »</td><td>Erreur 409 placée sur le champ titre</td><td>409 à la création ; 500 à la modification (à corriger)</td></tr>
+        <tr><td>Recherche par titre, sans tenir compte de la casse</td><td>La liste</td><td><code>NoteApi.searchByTitle()</code></td><td><code>findByTitleContainingIgnoreCase</code></td></tr>
+        <tr><td>10 résultats au maximum</td><td>« 10 premiers résultats sur 20 »</td><td><code>SEARCH_MAX_RESULTS</code> dans <code>note-search.ts</code></td><td>Renvoie tout</td></tr>
+        <tr><td>Après une création, ouvrir la note</td><td>La page de la note</td><td><code>NoteCreatePage.openNote()</code></td><td>Renvoie la note créée (201)</td></tr>
+        <tr><td>Supprimer demande confirmation</td><td>« Supprimer définitivement cette note ? »</td><td>Le mode <code>'confirm-delete'</code> de la page de détail</td><td>Rien</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <p class="lbl">À retenir</p>
+    <p>Le front valide pour le <strong>confort</strong> : l'utilisateur voit l'erreur avant d'envoyer. Le back valide pour la <strong>sécurité</strong> : n'importe qui peut appeler l'API avec Postman et contourner le front. C'est toujours le back qui a le dernier mot.</p>
+  </div>
+</section>
+
+<!-- =============================== 2 =============================== -->
+<section class="chapter" id="angular">
+  <header>
+    <p class="eyebrow">Chapitre 2</p>
+    <h2>Angular en une page</h2>
+    <p class="intro">Ce qu'est une application Angular, ce que le framework t'apporte, et le minimum de TypeScript pour lire le code.</p>
+  </header>
+
+  <h3>Une seule page HTML</h3>
+  <div class="compare">
+    <section>
+      <h4>Appli rendue par le serveur (Thymeleaf, JSP)</h4>
+      <ol>
+        <li>Tu cliques sur un lien.</li>
+        <li>Le navigateur demande <code>GET /notes/12</code>.</li>
+        <li>Le serveur fabrique tout le HTML de la page.</li>
+        <li>Le navigateur jette l'ancienne page et affiche la nouvelle.</li>
+      </ol>
+    </section>
+    <section>
+      <h4>SPA Angular (Brainers)</h4>
+      <ol>
+        <li>Au premier chargement, le navigateur reçoit <code>index.html</code> et un fichier JavaScript.</li>
+        <li>Tu cliques sur un lien : Angular change l'écran lui-même, sans recharger.</li>
+        <li>Il ne demande au serveur que des <strong>données</strong> : <code>GET /api/notes/12</code> → JSON.</li>
+        <li>Il fabrique le HTML dans le navigateur, à partir de tes templates.</li>
+      </ol>
+    </section>
+  </div>
+  <p>SPA veut dire <em>Single Page Application</em>. Angular est le cadre qui organise ce JavaScript : il te dit où mettre l'affichage, où mettre la logique, comment parler au back et comment associer une URL à un écran.</p>
+
+  <h3>Les briques d'Angular</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Brique</th><th>À quoi elle sert</th><th>Chapitre</th></tr></thead>
+      <tbody>
+        <tr><td><b>Composant</b></td><td>Un morceau d'écran : une classe TypeScript et un template HTML</td><td><a href="#composant">5</a></td></tr>
+        <tr><td><b>Template</b></td><td>Du HTML enrichi : afficher une valeur, réagir à un clic, répéter, conditionner</td><td><a href="#template">6</a></td></tr>
+        <tr><td><b>Signal</b></td><td>Une valeur qui prévient quand elle change, pour que l'écran se mette à jour</td><td><a href="#signals">7</a></td></tr>
+        <tr><td><b>Entrées et sorties</b></td><td>Faire circuler les données entre un composant parent et ses enfants</td><td><a href="#parent-enfant">8</a></td></tr>
+        <tr><td><b>Service et injection</b></td><td>Une classe sans affichage, partagée par toute l'application</td><td><a href="#services">9</a></td></tr>
+        <tr><td><b>HttpClient et RxJS</b></td><td>Appeler le back et traiter des réponses qui arrivent plus tard</td><td><a href="#rxjs">10</a></td></tr>
+        <tr><td><b>Routeur</b></td><td>Associer une URL à un écran</td><td><a href="#routeur">11</a></td></tr>
+        <tr><td><b>Formulaires</b></td><td>Lire une saisie, la valider, afficher les erreurs</td><td><a href="#formulaires">12</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Ce que tu connais déjà</h3>
+  <p>Ton back Spring et ce front partagent la moitié de leurs idées.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Spring (ton back)</th><th>Angular (ce front)</th><th>Rôle commun</th></tr></thead>
+      <tbody>
+        <tr><td><code>@GetMapping("/notes/{id}")</code></td><td><code>{ path: 'notes/:id', component: … }</code></td><td>Associer une URL à un traitement</td></tr>
+        <tr><td><code>@RestController</code></td><td>Page ou composant</td><td>Recevoir les actions (requête HTTP / clic, frappe)</td></tr>
+        <tr><td><code>@Service</code> + injection par constructeur</td><td><code>@Service()</code> + <code>inject(NoteApi)</code></td><td>Une instance unique, fournie là où on en a besoin</td></tr>
+        <tr><td><code>NoteRepository</code></td><td><code>NoteApi</code></td><td>Le seul endroit qui va chercher les données</td></tr>
+        <tr><td><code>NoteResponse</code>, <code>NoteRequest</code> (records)</td><td><code>Note</code>, <code>NoteRequest</code> (interfaces)</td><td>Le format des données échangées</td></tr>
+        <tr><td><code>@NotBlank</code>, <code>@Size</code></td><td><code>Validators.required</code>, <code>Validators.maxLength</code></td><td>Valider une saisie</td></tr>
+        <tr><td><code>@RestControllerAdvice</code></td><td><code>catchError</code> + états d'erreur</td><td>Traduire les erreurs pour l'utilisateur</td></tr>
+        <tr><td><code>pom.xml</code>, <code>mvn</code></td><td><code>package.json</code>, <code>npm</code>, <code>ng</code></td><td>Dépendances et outillage</td></tr>
+        <tr><td>JUnit + Mockito</td><td>Vitest + <code>HttpTestingController</code></td><td>Tester en remplaçant ce qui est extérieur</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="typescript">TypeScript pour un dev Java</h3>
+  <p>TypeScript, c'est JavaScript avec des types. Le compilateur vérifie les types, puis les efface : le navigateur exécute du JavaScript. Six différences suffisent pour lire Brainers.</p>
+
+  <h4>1. Le type s'écrit après le nom, et se déduit souvent</h4>
+  <script type="text/x-code" data-lang="typescript">
+    const title: string = 'Maven';      // String title = "Maven";
+    const max = 10;                     // le type number est déduit
+    protected readonly loading = signal(false);   // readonly ≈ final
+  </script>
+
+  <h4>2. Une interface décrit une forme, pas une classe</h4>
+  <script type="text/x-code" data-lang="typescript" data-file="src/app/notes/data/note.model.ts">
+    export interface Note {
+      id: number;
+      title: string;
+      content: string;
+      createdAt: string;      // LocalDateTime arrive en texte ISO
+      lastUpdateAt: string;
+    }
+
+    // Pas de new, pas de constructeur : un objet qui a la bonne forme EST une Note.
+    const maven: Note = { id: 11, title: 'Maven', content: '…', createdAt: '…', lastUpdateAt: '…' };
+  </script>
+  <div class="callout java">
+    <p class="lbl">Comme en Java</p>
+    <p>Une interface TypeScript ressemble plus à un <code>record</code> qu'à une interface Java. On parle de <strong>typage structurel</strong> : TypeScript regarde la forme de l'objet, pas son nom. Pas besoin d'<code>implements</code>.</p>
+  </div>
+
+  <h4>3. Les unions remplacent beaucoup d'enums et de <code>null</code></h4>
+  <script type="text/x-code" data-lang="typescript">
+    type Mode = 'read' | 'edit' | 'confirm-delete';   // exactement une de ces trois chaînes
+    readonly note = input<Note | null>(null);          // une Note, ou null : TypeScript t'oblige à vérifier
+  </script>
+
+  <h4>4. Lambdas, génériques, accès sûrs</h4>
+  <script type="text/x-code" data-lang="typescript">
+    notes.map((note) => note.title)               // notes.stream().map(note -> note.getTitle())
+    Observable<Note[]>                            // comme List<Note> : un type paramétré
+    `${environment.apiUrl}/notes`                 // "/api/notes" : chaîne avec variable
+    const { title, content } = this.form.getRawValue();   // déstructuration : deux variables d'un coup
+    page.querySelector('input')!                  // ! : « je te garantis que ce n'est pas null »
+  </script>
+
+  <h4>5. Les décorateurs ressemblent aux annotations</h4>
+  <script type="text/x-code" data-lang="typescript">
+    @Component({ selector: 'app-note-list', templateUrl: './note-list.html' })
+    export class NoteList { }
+  </script>
+  <p><code>@Component</code> joue le rôle de <code>@RestController</code> : il dit à Angular comment utiliser la classe. Chaque fichier est un <strong>module</strong> : on exporte avec <code>export</code> et on importe par chemin de fichier, <code>import { Note } from './note.model';</code>.</p>
+
+  <h4>6. Les types disparaissent à l'exécution</h4>
+  <div class="callout trap">
+    <p class="lbl">Piège</p>
+    <p><code>http.get&lt;Note[]&gt;(…)</code> ne vérifie rien quand la réponse arrive : c'est une promesse que tu fais au compilateur. Si le back envoie <code>lastUpdateAt</code> et que l'interface dit <code>lastUpDateTime</code>, rien ne plante, la date est juste vide. C'est exactement le bug corrigé dans Brainers (<a href="#back">chapitre 15</a>).</p>
+  </div>
+</section>
+
+<!-- =============================== 3 =============================== -->
+<section class="chapter" id="carte">
+  <header>
+    <p class="eyebrow">Chapitre 3</p>
+    <h2>La carte du projet</h2>
+    <p class="intro">Où est quoi, ce que tu modifies tous les jours, et ce que tu peux ignorer.</p>
+  </header>
+
+  <figure class="code"><figcaption><span>front/</span><span class="lang">arborescence</span></figcaption>
+<pre class="tree"><span class="d">front/</span>
+├── package.json            <span class="c">dépendances + scripts npm (≈ pom.xml)</span>
+├── angular.json            <span class="c">configuration du CLI : build, serve (proxy), test (seuils)</span>
+├── tsconfig.json           <span class="c">options TypeScript + alias @spartan-ng/helm/*</span>
+├── proxy.conf.json         <span class="c">/api/* → http://localhost:8080/*</span>
+├── components.json         <span class="c">où le CLI Spartan copie ses composants</span>
+├── <span class="d">libs/ui/</span>                <span class="c">composants Spartan UI, copiés chez toi (modifiables)</span>
+└── <span class="d">src/</span>
+    ├── index.html          <span class="c">LA page HTML, avec &lt;app-root&gt;</span>
+    ├── main.ts             <span class="c">démarre Angular</span>
+    ├── styles.css          <span class="c">Tailwind + thème (variables CSS)</span>
+    ├── <span class="d">environments/</span>       <span class="c">apiUrl selon l'environnement</span>
+    └── <span class="d">app/</span>
+        ├── app.ts, app.html    <span class="c">la coquille : en-tête + &lt;router-outlet&gt;</span>
+        ├── app.config.ts       <span class="c">ce qui est branché au démarrage</span>
+        ├── app.routes.ts       <span class="c">quelle URL affiche quelle page</span>
+        ├── <span class="d">notes/</span>              <span class="c">toute la fonctionnalité « notes »</span>
+        │   ├── <span class="d">data/</span>           <span class="c">note.model.ts · note.rules.ts · note-api.ts</span>
+        │   ├── <span class="d">pages/</span>          <span class="c">home-page · note-create-page · note-detail-page</span>
+        │   └── <span class="d">components/</span>     <span class="c">note-search · note-list · note-form</span>
+        └── <span class="d">shared/validators/</span>  <span class="c">not-blank.validator.ts</span></pre>
+  </figure>
+
+  <h3>Trois conventions à connaître</h3>
+  <ul>
+    <li><strong>Un composant = un dossier.</strong> <code>note-list/</code> contient <code>note-list.ts</code> (la classe), <code>note-list.html</code> (le template) et parfois <code>note-list.spec.ts</code> (ses tests).</li>
+    <li><strong>Un nom, trois formes.</strong> Fichier <code>note-list.ts</code>, classe <code>NoteList</code>, balise <code>&lt;app-note-list&gt;</code>. Dans du code Angular plus ancien, tu verras <code>note-list.component.ts</code> et <code>NoteListComponent</code> : même principe.</li>
+    <li><strong>Ranger par fonctionnalité.</strong> Tout ce qui concerne les notes est dans <code>notes/</code>. Une fonctionnalité « tags » aurait son dossier <code>tags/</code>, avec la même structure.</li>
+  </ul>
+
+  <h3>Qui a le droit d'appeler qui</h3>
+  <div class="layers">
+    <div><b>pages/</b><span>HomePage, NoteCreatePage, NoteDetailPage. Liées à une URL, elles assemblent et décident de la navigation.</span></div>
+    <div class="down">↓ utilisent</div>
+    <div><b>components/</b><span>NoteSearch, NoteForm, NoteList. Des morceaux d'écran réutilisables.</span></div>
+    <div class="down">↓ utilisent</div>
+    <div><b>data/</b><span>NoteApi, Note, NOTE_RULES. Le contrat avec le back et le seul service HTTP.</span></div>
+    <div class="down">↓ utilise</div>
+    <div><b>HttpClient</b><span>Fourni par Angular. Envoie les requêtes au back Spring.</span></div>
+  </div>
+  <p>On descend, on ne remonte jamais : <code>data/</code> ne connaît aucun composant. Pour prévenir son parent, un enfant émet un événement (<a href="#parent-enfant">chapitre 8</a>).</p>
+
+  <h3>L'outillage</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Commande (dans <code>front/</code>)</th><th>Ce qu'elle fait</th><th>Équivalent Maven</th></tr></thead>
+      <tbody>
+        <tr><td><code>npm install</code></td><td>Télécharge les dépendances de <code>package.json</code> dans <code>node_modules/</code></td><td><code>mvn dependency:resolve</code></td></tr>
+        <tr><td><code>npm start</code> (= <code>ng serve</code>)</td><td>Compile, sert l'appli sur <code>localhost:4200</code>, recharge à chaque sauvegarde, active le proxy</td><td><code>mvn spring-boot:run</code></td></tr>
+        <tr><td><code>npm run build</code></td><td>Build de production optimisé dans <code>dist/</code></td><td><code>mvn package</code></td></tr>
+        <tr><td><code>npm test</code></td><td>Tests Vitest, relancés à chaque sauvegarde</td><td><code>mvn test</code></td></tr>
+        <tr><td><code>npm run test:coverage</code></td><td>Tests + rapport de couverture (seuil bloquant : 80 %)</td><td>JaCoCo</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><code>node_modules/</code> et <code>dist/</code> ne sont pas dans Git (voir <code>.gitignore</code>) : <code>npm install</code> recrée le premier, <code>npm run build</code> le second. <code>package-lock.json</code> fige les versions exactes, comme un fichier de verrouillage.</p>
+  <div class="callout">
+    <p class="lbl">À ignorer pour l'instant</p>
+    <p><code>tsconfig.app.json</code>, <code>tsconfig.spec.json</code>, <code>.postcssrc.json</code> (branche Tailwind), <code>.editorconfig</code>, <code>.prettierrc</code> (formatage), <code>.vscode/</code>, <code>public/</code> (le favicon). Générés une fois, rarement modifiés.</p>
+  </div>
+</section>
+
+<!-- =============================== 4 =============================== -->
+<section class="chapter" id="demarrage">
+  <header>
+    <p class="eyebrow">Chapitre 4</p>
+    <h2>Du démarrage à l'écran</h2>
+    <p class="intro">Ce qui se passe entre le moment où tu ouvres <code>localhost:4200</code> et celui où la barre de recherche apparaît.</p>
+  </header>
+
+  <ol class="flow">
+    <li><span class="tier">Navigateur</span><span class="what">Il reçoit <code>index.html</code></span><span class="detail">Une page presque vide : une balise <code>&lt;app-root&gt;</code> et un script.</span></li>
+    <li><span class="tier">main.ts</span><span class="what"><code>bootstrapApplication(App, appConfig)</code></span><span class="detail">Angular démarre avec le composant racine <code>App</code> et la configuration.</span></li>
+    <li><span class="tier">app.config.ts</span><span class="what">Les providers sont branchés</span><span class="detail">Le routeur (avec la table des routes), HttpClient, la langue française.</span></li>
+    <li><span class="tier">app.ts, app.html</span><span class="what"><code>App</code> remplit <code>&lt;app-root&gt;</code></span><span class="detail">Son template dessine l'en-tête « B Brainers » et l'emplacement <code>&lt;router-outlet /&gt;</code>.</span></li>
+    <li><span class="tier">app.routes.ts</span><span class="what">Le routeur lit l'URL <code>/</code></span><span class="detail">Elle correspond à la route <code>''</code> : il crée <code>HomePage</code> dans <code>&lt;router-outlet /&gt;</code>.</span></li>
+    <li><span class="tier">home-page.html</span><span class="what">Les composants enfants sont créés</span><span class="detail"><code>&lt;app-note-search&gt;</code> devient un <code>NoteSearch</code>, qui dessine la barre.</span></li>
+  </ol>
+
+  <div class="pair">
+    <script type="text/x-code" data-lang="xml" data-file="src/index.html">
+      <!doctype html>
+      <html lang="fr">
+        <head>
+          <meta charset="utf-8" />
+          <title>Brainers</title>
+          <base href="/" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+        </head>
+        <body>
+          <app-root></app-root>
+        </body>
+      </html>
+    </script>
+    <script type="text/x-code" data-lang="typescript" data-file="src/main.ts">
+      import { bootstrapApplication } from '@angular/platform-browser';
+      import { appConfig } from './app/app.config';
+      import { App } from './app/app';
+
+      bootstrapApplication(App, appConfig).catch((err) => console.error(err));
+    </script>
+  </div>
+
+  <script type="text/x-code" data-lang="typescript" data-file="src/app/app.config.ts">
+    registerLocaleData(localeFr);   // noms de mois en français pour le pipe date
+
+    export const appConfig: ApplicationConfig = {
+      providers: [
+        provideBrowserGlobalErrorListeners(),   // remonte les erreurs dans la console
+        provideRouter(routes),                  // le routeur, avec app.routes.ts
+        provideHttpClient(),                    // HttpClient, utilisé par NoteApi
+        { provide: LOCALE_ID, useValue: 'fr' }, // "16 oct. 2026" plutôt que "Oct 16, 2026"
+      ],
+    };
+  </script>
+
+  <div class="pair">
+    <script type="text/x-code" data-lang="typescript" data-file="src/app/app.ts">
+      @Component({
+        selector: 'app-root',
+        imports: [RouterOutlet, RouterLink],
+        templateUrl: './app.html',
+      })
+      export class App {}
+    </script>
+    <script type="text/x-code" data-lang="xml" data-file="src/app/app.html">
+      <div class="flex min-h-dvh flex-col">
+        <header class="border-b">
+          <div class="mx-auto flex h-14 w-full max-w-2xl items-center px-4">
+            <a routerLink="/" class="flex items-center gap-2 font-semibold tracking-tight">
+              <span class="bg-primary text-primary-foreground grid size-7 place-items-center rounded-md text-sm" aria-hidden="true">B</span>
+              Brainers
+            </a>
+          </div>
+        </header>
+
+        <main class="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
+          <router-outlet />
+        </main>
+      </div>
+    </script>
+  </div>
+
+  <div class="callout java">
+    <p class="lbl">Comme en Java</p>
+    <p><code>appConfig</code> joue le rôle de ta classe <code>@Configuration</code> : c'est là qu'on déclare les briques disponibles pour toute l'application. <code>provideHttpClient()</code> ressemble à l'ajout d'un starter Spring.</p>
+  </div>
+  <p>Ensuite, quand tu cliques sur un lien interne, rien n'est rechargé : seules les étapes 5 et 6 se rejouent. Le routeur détruit la page affichée et crée la nouvelle dans <code>&lt;router-outlet /&gt;</code>. L'en-tête de <code>App</code>, lui, ne bouge pas.</p>
+</section>
+
+<!-- =============================== 5 =============================== -->
+<section class="chapter" id="composant">
+  <header>
+    <p class="eyebrow">Chapitre 5</p>
+    <h2>Le composant</h2>
+    <p class="intro">La brique de base. Tout ce que tu vois à l'écran est un composant, ou est dans le template d'un composant.</p>
+  </header>
+
+  <p>Un composant, c'est une <strong>classe</strong> TypeScript (les données et les actions), un <strong>template</strong> HTML (l'affichage) et un <strong>nom de balise</strong> (le <code>selector</code>). Le plus simple de Brainers est <code>NoteList</code> : il affiche la liste qu'on lui donne, rien de plus.</p>
+
+  <div class="pair">
+    <script type="text/x-code" data-lang="typescript" data-file="notes/components/note-list/note-list.ts">
+      import { Component, input } from '@angular/core';
+      import { RouterLink } from '@angular/router';
+      import { HlmItemImports } from '@spartan-ng/helm/item';
+      import { Note } from '../../data/note.model';
+
+      @Component({
+        selector: 'app-note-list',
+        imports: [RouterLink, HlmItemImports],
+        templateUrl: './note-list.html',
+      })
+      export class NoteList {
+        readonly notes = input.required<Note[]>();
+      }
+    </script>
+    <script type="text/x-code" data-lang="xml" data-file="notes/components/note-list/note-list.html">
+      <ul hlmItemGroup class="gap-2">
+        @for (note of notes(); track note.id) {
+          <li>
+            <a hlmItem variant="outline" [routerLink]="['/notes', note.id]">
+              <div hlmItemContent>
+                <h3 hlmItemTitle>{{ note.title }}</h3>
+                <p hlmItemDescription>{{ note.content }}</p>
+              </div>
+            </a>
+          </li>
+        }
+      </ul>
+    </script>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Élément</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>@Component({ … })</code></td><td>Fait de la classe un composant.</td></tr>
+        <tr><td><code>selector: 'app-note-list'</code></td><td>Le nom de la balise. Un parent écrit <code>&lt;app-note-list [notes]="…" /&gt;</code> et Angular crée un <code>NoteList</code> à cet endroit. Le préfixe <code>app-</code> évite les collisions avec les balises HTML.</td></tr>
+        <tr><td><code>imports: [ … ]</code></td><td>Tout ce que le template utilise : autres composants, directives Spartan, pipes. Ici <code>RouterLink</code> pour <code>[routerLink]</code>, <code>HlmItemImports</code> pour <code>hlmItem</code>.</td></tr>
+        <tr><td><code>templateUrl</code></td><td>Le fichier HTML du composant. On peut aussi écrire le HTML directement dans <code>template: `…`</code>.</td></tr>
+        <tr><td><code>notes = input.required&lt;Note[]&gt;()</code></td><td>Une <strong>entrée</strong> : la donnée que le parent fournit. On la lit en l'appelant, <code>notes()</code>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout trap">
+    <p class="lbl">Piège</p>
+    <p>Si tu utilises une balise ou une directive sans l'ajouter à <code>imports</code>, Angular refuse de compiler : <code>NG8001: 'app-note-list' is not a known element</code>. C'est l'erreur la plus fréquente au début. Les composants de Brainers sont <strong>standalone</strong> : chacun déclare ses propres imports, sans <code>NgModule</code>. Si tu vois des <code>@NgModule</code> dans un autre projet, c'est l'ancienne manière.</p>
+  </div>
+
+  <h3>Les sept composants et le service</h3>
+  <p>Clique sur un élément de l'arbre pour voir sa carte d'identité : son fichier, ce qu'il reçoit, ce qu'il émet, ce qu'il appelle et l'état qu'il garde.</p>
+  <div class="explorer" id="explorer">
+    <ul class="ex-tree" id="ex-tree" aria-label="Arbre des composants"></ul>
+    <div class="ex-card" id="ex-card" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- =============================== 6 =============================== -->
+<section class="chapter" id="template">
+  <header>
+    <p class="eyebrow">Chapitre 6</p>
+    <h2>Le template</h2>
+    <p class="intro">Du HTML normal, plus quelques syntaxes qu'Angular comprend. La logique reste dans la classe ; le template affiche et transmet les clics.</p>
+  </header>
+
+  <h3>Les quatre liaisons</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Syntaxe</th><th>Sens</th><th>Dans Brainers</th></tr></thead>
+      <tbody>
+        <tr><td><code>{{ expr }}</code></td><td>Afficher une valeur dans le texte</td><td><code>{{ current.note.title }}</code></td></tr>
+        <tr><td><code>[prop]="expr"</code></td><td>Donner une valeur à une propriété (classe → template)</td><td><code>[notes]="current.notes"</code>, <code>[disabled]="form.invalid || submitting()"</code></td></tr>
+        <tr><td><code>(event)="action()"</code></td><td>Réagir à un événement (template → classe)</td><td><code>(click)="startEdit()"</code>, <code>(saved)="onSaved($event)"</code></td></tr>
+        <tr><td><code>[formControl]</code>, <code>formControlName</code></td><td>Relier un champ à un contrôle de formulaire, dans les deux sens</td><td><code>formControlName="title"</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout trap">
+    <p class="lbl">Avec ou sans crochets</p>
+    <p><code>routerLink="/"</code> passe la <strong>chaîne</strong> <code>"/"</code>. <code>[routerLink]="['/notes', note.id]"</code> évalue une <strong>expression</strong> TypeScript, ici un tableau qui donne <code>/notes/12</code>. Sans crochets, Angular aurait reçu le texte <code>['/notes', note.id]</code> tel quel.</p>
+  </div>
+  <p><code>$event</code> contient ce que l'événement transporte. Pour <code>(submit)</code>, c'est l'événement du navigateur ; pour <code>(saved)</code>, c'est la note émise par le formulaire.</p>
+
+  <h3>Le contrôle de flux</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Bloc</th><th>Rôle</th><th>Dans Brainers</th></tr></thead>
+      <tbody>
+        <tr><td><code>@if (cond) { } @else { }</code></td><td>Afficher sous condition</td><td>Les résultats, ou « Aucune note trouvée. »</td></tr>
+        <tr><td><code>@for (x of liste; track x.id) { }</code></td><td>Répéter. <code>track</code> dit comment reconnaître chaque élément, pour ne recréer que ce qui a changé</td><td>Une ligne par note</td></tr>
+        <tr><td><code>@switch (v) { @case ('a') { } }</code></td><td>Un affichage par valeur</td><td>Un affichage par état de la recherche ou du détail</td></tr>
+        <tr><td><code>@let nom = expr;</code></td><td>Une variable locale au template</td><td><code>@let current = state();</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <script type="text/x-code" data-lang="xml" data-file="notes/pages/note-detail-page/note-detail-page.html (squelette)">
+    @let current = state();
+
+    @switch (current.status) {
+      @case ('loading')   { <hlm-spinner aria-label="Chargement de la note" /> }
+      @case ('success')   {
+        @if (mode() === 'edit') { <app-note-form [note]="current.note" … /> }
+        @else { <article hlmCard> … {{ current.note.title }} … </article> }
+      }
+      @case ('not-found') { … Note introuvable … }
+      @case ('error')     { … Impossible de charger la note. … }
+    }
+  </script>
+
+  <h3>Les pipes</h3>
+  <p>Un pipe transforme une valeur au moment de l'afficher, sans toucher à la donnée.</p>
+  <script type="text/x-code" data-lang="xml">
+    {{ current.note.createdAt | date: "d MMM y 'à' HH:mm" }}    →  21 oct. 2026 à 14:18
+    {{ rules.contentMaxLength | number }}                       →  10 000
+  </script>
+  <p>Le pipe <code>date</code> doit être importé (<code>DatePipe</code> dans <code>imports</code>), et parle français grâce à <code>LOCALE_ID</code> dans <code>app.config.ts</code>.</p>
+
+  <div class="callout">
+    <p class="lbl">À retenir</p>
+    <p>Le template ne voit que les membres <code>public</code> et <code>protected</code> de la classe. Brainers met en <code>protected</code> ce qui sert au template (<code>startEdit()</code>, <code>mode</code>) et en <code>private</code> ce qui n'y sert pas (<code>noteApi</code>, <code>load()</code>). Garde les expressions courtes : une condition, un appel de méthode. Dès que ça grossit, crée une méthode dans la classe.</p>
+  </div>
+</section>
+
+<!-- =============================== 7 =============================== -->
+<section class="chapter" id="signals">
+  <header>
+    <p class="eyebrow">Chapitre 7</p>
+    <h2>Les signals</h2>
+    <p class="intro">Comment Angular sait qu'il doit redessiner l'écran.</p>
+  </header>
+
+  <p>Un signal est une <strong>valeur qui prévient quand elle change</strong>. Le template qui la lit se met à jour tout seul.</p>
+  <script type="text/x-code" data-lang="typescript">
+    protected readonly loading = signal(false);   // créer, avec une valeur de départ
+
+    loading();          // lire  → false   (on l'appelle comme une fonction)
+    loading.set(true);  // écrire → tout template qui lit loading() est redessiné
+  </script>
+  <script type="text/x-code" data-lang="xml" data-file="notes/components/note-search/note-search.html">
+    @if (loading()) {
+      <div hlmInputGroupAddon align="inline-end">
+        <hlm-spinner aria-label="Recherche en cours" />
+      </div>
+    }
+  </script>
+
+  <h3>Pourquoi c'est central ici</h3>
+  <p>Brainers n'utilise pas <code>zone.js</code> (cherche-le dans <code>package.json</code> : il n'y est pas). On dit que l'application est <strong>zoneless</strong>. Angular redessine un composant quand :</p>
+  <ul>
+    <li>un <strong>signal</strong> qu'il lit change ;</li>
+    <li>un <strong>événement</strong> se produit dans son template (clic, frappe, submit) ;</li>
+    <li>une de ses <strong>entrées</strong> (<code>input()</code>) change.</li>
+  </ul>
+  <p>Une réponse HTTP arrive hors de tout événement de template. Si elle modifie une variable ordinaire, l'écran ne bouge pas. D'où la règle pratique : <strong>tout ce qui change avec le temps et s'affiche est un signal.</strong> C'est pour ça que <code>loading</code>, <code>submitting</code>, <code>serverError</code>, <code>mode</code>, <code>deleting</code> et <code>deleteFailed</code> sont des signals.</p>
+
+  <h3>Les autres formes de signals dans Brainers</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Fonction</th><th>Ce qu'elle donne</th><th>Où</th></tr></thead>
+      <tbody>
+        <tr><td><code>signal(v)</code></td><td>Un signal qu'on lit et qu'on écrit</td><td>Partout pour les états simples</td></tr>
+        <tr><td><code>input()</code>, <code>input.required()</code></td><td>Un signal en lecture seule, rempli par le parent</td><td><code>NoteList.notes</code>, <code>NoteForm.note</code></td></tr>
+        <tr><td><code>toSignal(obs$)</code></td><td>La dernière valeur d'un Observable (<a href="#rxjs">chapitre 10</a>), en signal. Se désabonne tout seul</td><td><code>NoteSearch.result</code>, <code>NoteDetailPage.loaded</code></td></tr>
+        <tr><td><code>linkedSignal(() => …)</code></td><td>Un signal qui suit une source, mais qu'on peut aussi corriger avec <code>set()</code></td><td><code>NoteDetailPage.state</code> (<a href="#etats">chapitre 13</a>)</td></tr>
+        <tr><td><code>computed(() => …)</code></td><td>Une valeur calculée à partir d'autres signals, en lecture seule</td><td>Pas dans l'appli, mais partout dans <code>libs/ui</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout trap">
+    <p class="lbl">Piège</p>
+    <p>Oublier les parenthèses. <code>@if (loading)</code> teste la <em>fonction</em> signal, qui est toujours « vraie » : le spinner s'afficherait en permanence. Il faut <code>@if (loading())</code>. Même chose dans la classe : <code>this.note()</code>, pas <code>this.note</code>.</p>
+  </div>
+</section>
+
+<!-- =============================== 8 =============================== -->
+<section class="chapter" id="parent-enfant">
+  <header>
+    <p class="eyebrow">Chapitre 8</p>
+    <h2>Parents et enfants</h2>
+    <p class="intro">Les données descendent par les entrées, les événements remontent par les sorties, et du HTML peut être projeté d'un parent vers un enfant.</p>
+  </header>
+
+  <ol class="flow">
+    <li><span class="tier">↓ input()</span><span class="what">Le parent donne une valeur</span><span class="detail"><code>&lt;app-note-list [notes]="current.notes" /&gt;</code> : <code>NoteSearch</code> passe les notes trouvées à <code>NoteList</code>.</span></li>
+    <li><span class="tier">↑ output()</span><span class="what">L'enfant prévient le parent</span><span class="detail"><code>NoteForm</code> fait <code>this.saved.emit(savedNote)</code> ; le parent écoute avec <code>(saved)="openNote($event)"</code>.</span></li>
+    <li><span class="tier">↓ &lt;ng-content /&gt;</span><span class="what">Le parent glisse du HTML</span><span class="detail"><code>HomePage</code> place le lien « Créer » entre les balises de <code>&lt;app-note-search&gt;</code>.</span></li>
+  </ol>
+
+  <h3>Entrée et sorties : le formulaire</h3>
+  <script type="text/x-code" data-lang="typescript" data-file="notes/components/note-form/note-form.ts">
+    /** La note à modifier. Absente (null) : le formulaire crée une nouvelle note. */
+    readonly note = input<Note | null>(null);
+
+    /** Émis avec la note enregistrée (créée ou modifiée). */
+    readonly saved = output<Note>();
+
+    /** Émis au clic sur "Annuler". Le parent décide où revenir. */
+    readonly cancelled = output<void>();
+  </script>
+  <p>Le même formulaire sert à deux parents, qui en font deux usages différents :</p>
+  <div class="pair">
+    <script type="text/x-code" data-lang="xml" data-file="note-create-page.html">
+      <app-note-form
+        (saved)="openNote($event)"
+        (cancelled)="goHome()"
+      />
+    </script>
+    <script type="text/x-code" data-lang="xml" data-file="note-detail-page.html">
+      <app-note-form
+        [note]="current.note"
+        (saved)="onSaved($event)"
+        (cancelled)="backToReading()"
+      />
+    </script>
+  </div>
+  <div class="callout">
+    <p class="lbl">Pourquoi le formulaire ne navigue pas lui-même</p>
+    <p>« Que faire après l'enregistrement » est une décision de <strong>page</strong>. Après une création, <code>NoteCreatePage</code> ouvre la note ; après une modification, <code>NoteDetailPage</code> repasse en lecture. Le formulaire, lui, est identique dans les deux cas. Un enfant qui émet au lieu d'agir reste réutilisable.</p>
+  </div>
+
+  <h3>La projection de contenu</h3>
+  <div class="pair">
+    <script type="text/x-code" data-lang="xml" data-file="home-page.html (le parent)">
+      <app-note-search>
+        <a hlmBtn variant="outline" size="lg" routerLink="/notes/new">Créer</a>
+      </app-note-search>
+    </script>
+    <script type="text/x-code" data-lang="xml" data-file="note-search.html (l'enfant)">
+      <div class="flex gap-2">
+        <button hlmBtn size="lg" type="submit">Rechercher</button>
+        <!-- ici s'affiche le lien "Créer" du parent -->
+        <ng-content />
+      </div>
+    </script>
+  </div>
+  <p>Résultat : <code>NoteSearch</code> reste un composant de recherche, il ne sait rien de la création. C'est la page qui décide d'ajouter « Créer » à côté de « Rechercher ».</p>
+</section>
+
+<!-- =============================== 9 =============================== -->
+<section class="chapter" id="services">
+  <header>
+    <p class="eyebrow">Chapitre 9</p>
+    <h2>Services et injection</h2>
+    <p class="intro">Le seul endroit qui connaît les URL du back.</p>
+  </header>
+
+  <p>Un service est une classe sans affichage, avec <strong>une seule instance</strong> pour toute l'application, qu'Angular fournit à qui la demande. Brainers en a un : <code>NoteApi</code>, une méthode par route du back.</p>
+  <script type="text/x-code" data-lang="typescript" data-file="src/app/notes/data/note-api.ts">
+    @Service()
+    export class NoteApi {
+      private readonly http = inject(HttpClient);
+      private readonly notesUrl = `${environment.apiUrl}/notes`;   // "/api/notes"
+
+      /** GET /api/notes?title=...  (titre vide : sans paramètre → toutes les notes) */
+      searchByTitle(title: string): Observable<Note[]> {
+        const params: Record<string, string> = title === '' ? {} : { title };
+        return this.http.get<Note[]>(this.notesUrl, { params });
+      }
+
+      /** GET /api/notes/{id}  — 404 si la note n'existe pas */
+      getById(id: number): Observable<Note> {
+        return this.http.get<Note>(`${this.notesUrl}/${id}`);
+      }
+
+      /** POST /api/notes  — 201, ou 409 si le titre existe déjà */
+      create(request: NoteRequest): Observable<Note> {
+        return this.http.post<Note>(this.notesUrl, request);
+      }
+
+      /** PUT /api/notes/{id}  — 200, ou 404 */
+      update(id: number, request: NoteRequest): Observable<Note> {
+        return this.http.put<Note>(`${this.notesUrl}/${id}`, request);
+      }
+
+      /** DELETE /api/notes/{id}  — 204 sans contenu, ou 404 */
+      delete(id: number): Observable<void> {
+        return this.http.delete<void>(`${this.notesUrl}/${id}`);
+      }
+    }
+  </script>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Élément</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td><code>@Service()</code></td><td>Nouveau en Angular 22 : une instance unique, injectable partout. Dans le code existant tu verras <code>@Injectable({ providedIn: 'root' })</code>, même effet.</td></tr>
+        <tr><td><code>inject(HttpClient)</code></td><td>Demande à Angular l'instance de <code>HttpClient</code>. Remplace l'injection par constructeur (qui marche aussi). S'utilise dans la déclaration des champs.</td></tr>
+        <tr><td><code>environment.apiUrl</code></td><td>Le préfixe <code>/api</code>, lu dans <code>src/environments/</code>. Un fichier par environnement, comme les profils Spring.</td></tr>
+        <tr><td><code>Observable&lt;Note[]&gt;</code></td><td>La réponse à venir. Aucune requête ne part tant que personne ne s'y abonne (<a href="#rxjs">chapitre 10</a>).</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout java">
+    <p class="lbl">Comme en Java</p>
+    <p><code>private readonly noteApi = inject(NoteApi);</code> dans un composant, c'est ton <code>public NoteController(NoteService noteService)</code>. <code>NoteApi</code> joue pour le front le rôle de <code>NoteRepository</code> pour le back : si une route change, c'est le seul fichier à modifier.</p>
+  </div>
+  <p>Les composants injectent aussi des services fournis par Angular : <code>Router</code> pour naviguer, <code>ActivatedRoute</code> pour lire l'URL, <code>NonNullableFormBuilder</code> pour construire un formulaire.</p>
+</section>
+
+<!-- =============================== 10 =============================== -->
+<section class="chapter" id="rxjs">
+  <header>
+    <p class="eyebrow">Chapitre 10</p>
+    <h2>RxJS, le strict nécessaire</h2>
+    <p class="intro">HttpClient renvoie des Observables. Tu n'as besoin que d'une poignée d'opérateurs pour lire Brainers.</p>
+  </header>
+
+  <h3>Un Observable, c'est quoi</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th></th><th>Java <code>Stream</code></th><th><code>Promise</code> (JS)</th><th><code>Observable</code> (RxJS)</th></tr></thead>
+      <tbody>
+        <tr><td>Combien de valeurs</td><td>Plusieurs, déjà là</td><td>Une seule, plus tard</td><td>Zéro, une ou plusieurs, dans le temps</td></tr>
+        <tr><td>Quand ça démarre</td><td>À l'opération terminale</td><td>Tout de suite</td><td>À l'abonnement (<code>subscribe</code>)</td></tr>
+        <tr><td>Annulable</td><td>Non</td><td>Non</td><td>Oui</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <script type="text/x-code" data-lang="typescript">
+    const obs = this.http.get<Note[]>('/api/notes');   // aucune requête n'est partie
+    obs.subscribe((notes) => console.log(notes));      // la requête part MAINTENANT
+  </script>
+  <p>Un Observable HTTP émet une seule valeur (la réponse) puis se termine. En cas d'erreur HTTP (404, 409, 500…), il émet une <code>HttpErrorResponse</code> dont tu lis le <code>status</code>.</p>
+
+  <h3>Les opérateurs utilisés</h3>
+  <p>On enchaîne des opérateurs dans <code>.pipe(…)</code>, comme les étapes d'un <code>stream()</code>, mais dans le temps.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Opérateur</th><th>Ce qu'il fait</th><th>Où</th></tr></thead>
+      <tbody>
+        <tr><td><code>map(f)</code></td><td>Transforme chaque valeur</td><td>Tableau de notes → état <code>success</code></td></tr>
+        <tr><td><code>switchMap(f)</code></td><td>Pour chaque valeur, lance un nouvel Observable et <strong>annule le précédent</strong></td><td>Chaque recherche ; chaque id d'URL</td></tr>
+        <tr><td><code>catchError(f)</code></td><td>Remplace une erreur par une valeur</td><td>Erreur HTTP → état <code>error</code> ou <code>not-found</code></td></tr>
+        <tr><td><code>finalize(f)</code></td><td>Exécute <code>f</code> à la fin, réussite, erreur ou annulation</td><td>Cacher le spinner</td></tr>
+        <tr><td><code>startWith(v)</code></td><td>Émet <code>v</code> tout de suite, avant le reste</td><td>Afficher le chargement du détail</td></tr>
+        <tr><td><code>of(v)</code></td><td>Un Observable qui émet <code>v</code> et se termine</td><td>Un état fixe : <code>of({ status: 'error' })</code></td></tr>
+        <tr><td><code>Subject</code></td><td>Un Observable dans lequel on pousse soi-même les valeurs avec <code>next()</code></td><td>Les clics sur « Rechercher »</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Le pipeline de la recherche</h3>
+  <script type="text/x-code" data-lang="typescript" data-file="notes/components/note-search/note-search.ts">
+    private readonly searches = new Subject<string>();
+
+    protected readonly result = toSignal(
+      this.searches.pipe(
+        switchMap((term) => this.search(term)),   // une recherche par clic, la précédente est annulée
+      ),
+      { initialValue: IDLE },
+    );
+
+    protected submit(event: Event): void {
+      event.preventDefault();                                // pas de rechargement de la page
+      this.searches.next(this.searchControl.value.trim());   // "  java " → "java"
+    }
+
+    private search(term: string): Observable<SearchResult> {
+      this.loading.set(true);
+      return this.noteApi.searchByTitle(term).pipe(
+        map((notes): SearchResult => ({
+          status: 'success',
+          notes: notes.slice(0, SEARCH_MAX_RESULTS),
+          total: notes.length,
+        })),
+        catchError(() => of<SearchResult>({ status: 'error' })),
+        finalize(() => this.loading.set(false)),
+      );
+    }
+  </script>
+
+  <h4>Pourquoi <code>switchMap</code></h4>
+  <p>Tu cherches « ja », le back est lent. Tu corriges en « java » et relances : une deuxième requête part et revient vite. Puis la réponse de « ja » arrive enfin.</p>
+  <script type="text/x-code" data-lang="plaintext">
+    clics       "ja" ─────────── "java" ──────────────────────────▶ temps
+    requêtes     GET ?title=ja    GET ?title=java
+    réponses                            [java : 5 notes]     [ja : 6 notes]
+
+    mergeMap  :  affiche java… puis ÉCRASÉ par ja        ✗  l'écran ment
+    switchMap :  la requête "ja" est annulée dès "java"  ✓  l'écran montre "java"
+  </script>
+
+  <h4>Pourquoi <code>catchError</code> est dans <code>search()</code></h4>
+  <p>Une erreur qui atteint le pipeline principal le <strong>termine</strong> : plus aucun clic ne déclencherait de recherche. Placé à l'intérieur de chaque recherche, <code>catchError</code> transforme l'erreur en état <code>{ status: 'error' }</code> et le pipeline continue. Un test vérifie justement qu'une recherche marche encore après une erreur.</p>
+
+  <h3>Le pipeline du détail</h3>
+  <script type="text/x-code" data-lang="typescript" data-file="notes/pages/note-detail-page/note-detail-page.ts">
+    private readonly loaded = toSignal(
+      this.route.paramMap.pipe(
+        map((params) => Number(params.get('id'))),   // "/notes/12" → 12
+        switchMap((id) => this.load(id)),
+      ),
+      { initialValue: LOADING },
+    );
+
+    private load(id: number): Observable<DetailState> {
+      if (!Number.isInteger(id) || id <= 0) {
+        return of<DetailState>({ status: 'not-found' });   // "/notes/abc" : inutile d'appeler le back
+      }
+      return this.noteApi.getById(id).pipe(
+        map((note): DetailState => ({ status: 'success', note })),
+        catchError((error: HttpErrorResponse) =>
+          of<DetailState>(error.status === 404 ? { status: 'not-found' } : { status: 'error' }),
+        ),
+        startWith(LOADING),   // émis tout de suite : le spinner s'affiche
+      );
+    }
+  </script>
+
+  <h3>Trois façons de s'abonner</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Façon</th><th>Où</th><th>Désabonnement</th></tr></thead>
+      <tbody>
+        <tr><td><code>.subscribe({ next, error })</code></td><td><code>NoteForm.submit()</code>, <code>NoteDetailPage.deleteNote()</code></td><td>Inutile : un Observable HTTP se termine après la réponse</td></tr>
+        <tr><td>Un opérateur (<code>switchMap</code>)</td><td><code>NoteSearch</code>, <code>NoteDetailPage</code></td><td>Géré par l'opérateur</td></tr>
+        <tr><td><code>toSignal(obs$)</code></td><td><code>NoteSearch</code>, <code>NoteDetailPage</code></td><td>Automatique quand le composant disparaît</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <p class="lbl">Variante</p>
+    <p>La première version de Brainers cherchait pendant la frappe : <code>searchControl.valueChanges</code> au lieu du <code>Subject</code>, plus <code>debounceTime(300)</code> (attendre 300 ms sans frappe) et <code>distinctUntilChanged()</code> (ignorer un texte identique). Le reste du pipeline ne change pas.</p>
+  </div>
+</section>
+
+<!-- =============================== 11 =============================== -->
+<section class="chapter" id="routeur">
+  <header>
+    <p class="eyebrow">Chapitre 11</p>
+    <h2>Le routeur</h2>
+    <p class="intro">Une URL par écran, sans jamais recharger la page.</p>
+  </header>
+
+  <script type="text/x-code" data-lang="typescript" data-file="src/app/app.routes.ts">
+    export const routes: Routes = [
+      { path: '', component: HomePage, title: 'Brainers' },
+      { path: 'notes/new', component: NoteCreatePage, title: 'Nouvelle note · Brainers' },
+      { path: 'notes/:id', component: NoteDetailPage, title: 'Note · Brainers' },
+      { path: '**', redirectTo: '' },   // toute autre URL → accueil
+    ];
+  </script>
+  <p>Le routeur parcourt la liste <strong>dans l'ordre</strong> et prend la première route qui correspond. <code>:id</code> est un paramètre : <code>/notes/12</code> correspond, avec <code>id = "12"</code>. <code>title</code> change le titre de l'onglet du navigateur.</p>
+  <div class="callout trap">
+    <p class="lbl">Piège</p>
+    <p><code>notes/new</code> doit être <strong>avant</strong> <code>notes/:id</code>. Dans l'autre ordre, <code>/notes/new</code> correspondrait à <code>notes/:id</code> avec <code>id = "new"</code>, et tu tomberais sur « Note introuvable » au lieu du formulaire.</p>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Outil</th><th>Rôle</th><th>Dans Brainers</th></tr></thead>
+      <tbody>
+        <tr><td><code>&lt;router-outlet /&gt;</code></td><td>L'emplacement où s'affiche la page</td><td><code>app.html</code></td></tr>
+        <tr><td><code>routerLink</code></td><td>Un lien interne, sans rechargement</td><td>« Créer », « Retour aux notes », chaque résultat</td></tr>
+        <tr><td><code>router.navigate([…])</code></td><td>Naviguer depuis le code</td><td>Après une création, après une suppression</td></tr>
+        <tr><td><code>ActivatedRoute.paramMap</code></td><td>Lire les paramètres de l'URL, sous forme d'Observable</td><td><code>NoteDetailPage</code> lit <code>id</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <script type="text/x-code" data-lang="typescript" data-file="notes/pages/note-create-page/note-create-page.ts">
+    export class NoteCreatePage {
+      private readonly router = inject(Router);
+
+      protected openNote(note: Note): void {
+        this.router.navigate(['/notes', note.id]);   // → /notes/21
+      }
+
+      protected goHome(): void {
+        this.router.navigate(['/']);
+      }
+    }
+  </script>
+  <p><strong>Pourquoi <code>paramMap</code> est un Observable.</strong> Si tu passes de <code>/notes/1</code> à <code>/notes/2</code>, Angular <em>réutilise</em> le même composant au lieu d'en créer un nouveau. Une lecture unique de l'URL au démarrage raterait le changement ; <code>paramMap</code> émet le nouvel id.</p>
+  <p>Les boutons « précédent » et « suivant » du navigateur fonctionnent tout seuls : le routeur met à jour l'historique à chaque navigation.</p>
+</section>
+
+<!-- =============================== 12 =============================== -->
+<section class="chapter" id="formulaires">
+  <header>
+    <p class="eyebrow">Chapitre 12</p>
+    <h2>Les formulaires</h2>
+    <p class="intro">Décrire le formulaire dans la classe, le relier au HTML, valider, afficher les erreurs, envoyer.</p>
+  </header>
+
+  <p>Angular propose deux façons de faire des formulaires. Brainers utilise les <strong>formulaires réactifs</strong> : le modèle du formulaire est écrit en TypeScript, puis relié aux champs HTML.</p>
+
+  <h3>Le modèle</h3>
+  <script type="text/x-code" data-lang="typescript" data-file="notes/components/note-form/note-form.ts">
+    private readonly formBuilder = inject(NonNullableFormBuilder);
+
+    protected readonly form = this.formBuilder.group({
+      title: [
+        '',
+        [Validators.required, notBlankValidator, Validators.maxLength(NOTE_RULES.titleMaxLength)],
+      ],
+      content: [
+        '',
+        [Validators.required, notBlankValidator, Validators.maxLength(NOTE_RULES.contentMaxLength)],
+      ],
+    });
+  </script>
+  <p>Chaque contrôle a un état que tu peux lire : <code>value</code>, <code>valid</code> / <code>invalid</code>, <code>errors</code>, <code>touched</code> (le champ a été quitté au moins une fois), <code>dirty</code> (il a été modifié). <code>NonNullableFormBuilder</code> garantit qu'après un <code>reset()</code> les champs valent <code>''</code> et jamais <code>null</code>.</p>
+
+  <h3>Le lien avec le HTML</h3>
+  <script type="text/x-code" data-lang="xml" data-file="notes/components/note-form/note-form.html (extrait)">
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="flex flex-col gap-6">
+      <div hlmField>
+        <label hlmFieldLabel for="note-title">Titre</label>
+        <input hlmInput id="note-title" formControlName="title" autocomplete="off" />
+        <p hlmFieldDescription>{{ form.controls.title.value.length }} / {{ rules.titleMaxLength }} caractères</p>
+
+        <hlm-field-error validator="required">Le titre est obligatoire.</hlm-field-error>
+        <hlm-field-error validator="blank">Le titre ne peut pas contenir uniquement des espaces.</hlm-field-error>
+        <hlm-field-error validator="maxlength">Le titre ne doit pas dépasser {{ rules.titleMaxLength }} caractères.</hlm-field-error>
+        <hlm-field-error validator="duplicate">Une note porte déjà ce titre.</hlm-field-error>
+      </div>
+      …
+      <button hlmBtn type="submit" [disabled]="form.invalid || submitting()">Enregistrer</button>
+    </form>
+  </script>
+  <ul>
+    <li><code>[formGroup]="form"</code> relie la balise <code>&lt;form&gt;</code> au modèle ; <code>formControlName="title"</code> relie le champ au contrôle <code>title</code>.</li>
+    <li><code>(ngSubmit)</code> se déclenche au clic sur le bouton <code>submit</code> ou avec <kbd>Entrée</kbd>. <code>novalidate</code> laisse Angular valider à la place du navigateur.</li>
+    <li>Chaque <code>&lt;hlm-field-error validator="…"&gt;</code> (Spartan) ne s'affiche que si le champ a <em>cette</em> erreur <strong>et</strong> a été quitté. On ne crie pas sur l'utilisateur pendant qu'il tape.</li>
+  </ul>
+
+  <h3>Les clés d'erreur</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Saisie</th><th><code>errors</code></th><th>Message</th></tr></thead>
+      <tbody>
+        <tr><td><code>""</code></td><td><code>{ required: true }</code></td><td>Le titre est obligatoire.</td></tr>
+        <tr><td><code>"   "</code></td><td><code>{ blank: true }</code></td><td>Le titre ne peut pas contenir uniquement des espaces.</td></tr>
+        <tr><td>101 caractères</td><td><code>{ maxlength: {…} }</code></td><td>Le titre ne doit pas dépasser 100 caractères.</td></tr>
+        <tr><td><code>"Maven"</code> + réponse 409</td><td><code>{ duplicate: true }</code></td><td>Une note porte déjà ce titre.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Un validateur maison</h3>
+  <p><code>Validators.required</code> accepte <code>"   "</code> : pour lui, trois espaces ne font pas une chaîne vide. RG1 et RG2 l'interdisent, d'où un validateur à nous. Un validateur n'est qu'une fonction : un contrôle en entrée, <code>null</code> si tout va bien, un objet d'erreurs sinon.</p>
+  <script type="text/x-code" data-lang="typescript" data-file="src/app/shared/validators/not-blank.validator.ts">
+    export const notBlankValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+      const value: unknown = control.value;
+      if (typeof value !== 'string' || value.length === 0) {
+        return null;                        // le vide, c'est le travail de Validators.required
+      }
+      return value.trim().length === 0 ? { blank: true } : null;
+    };
+  </script>
+
+  <h3>L'envoi</h3>
+  <script type="text/x-code" data-lang="typescript" data-file="notes/components/note-form/note-form.ts">
+    protected submit(): void {
+      if (this.form.invalid || this.submitting()) {
+        this.form.markAllAsTouched();       // touche Entrée sur un formulaire invalide : afficher les erreurs
+        return;
+      }
+
+      const { title, content } = this.form.getRawValue();
+      const request: NoteRequest = { title: title.trim(), content };
+
+      const note = this.note();             // une note reçue en entrée ? alors on modifie
+      const save = note ? this.noteApi.update(note.id, request) : this.noteApi.create(request);
+
+      this.submitting.set(true);
+      this.serverError.set(null);
+
+      save.subscribe({
+        next: (savedNote) => {
+          this.submitting.set(false);
+          this.saved.emit(savedNote);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.submitting.set(false);
+          this.handleError(error);          // 409 → sur le champ ; 400, 404, 500 → alerte
+        },
+      });
+    }
+  </script>
+  <p><strong>Le 409 placé sur le champ.</strong> Quand le back répond « titre déjà pris », <code>handleError</code> fait <code>title.setErrors({ duplicate: true })</code>. Le message apparaît sous le titre, le bouton se désactive, et dès que l'utilisateur modifie le titre, les validateurs repassent et l'erreur disparaît.</p>
+
+  <h3>Le même formulaire pour modifier</h3>
+  <script type="text/x-code" data-lang="typescript" data-file="notes/components/note-form/note-form.ts">
+    ngOnInit(): void {
+      const note = this.note();
+      if (note) {
+        this.form.setValue({ title: note.title, content: note.content });   // pré-remplir
+      }
+    }
+  </script>
+  <p>Pourquoi <code>ngOnInit</code> et pas le constructeur ? Dans le constructeur, Angular n'a pas encore donné leurs valeurs aux entrées : <code>this.note()</code> vaudrait toujours <code>null</code>. <code>ngOnInit</code> est un <strong>hook de cycle de vie</strong>, appelé juste après, quand les entrées sont connues.</p>
+
+  <div class="callout">
+    <p class="lbl">La recherche, elle, n'a qu'un champ</p>
+    <p><code>NoteSearch</code> utilise un <code>FormControl</code> seul, relié par <code>[formControl]="searchControl"</code>, dans un <code>&lt;form (submit)="submit($event)"&gt;</code> natif. Sans <code>[formGroup]</code>, pas de <code>(ngSubmit)</code> : c'est l'événement <code>submit</code> du navigateur, d'où le <code>event.preventDefault()</code> qui évite le rechargement de la page.</p>
+  </div>
+</section>
+
+<!-- =============================== 13 =============================== -->
+<section class="chapter" id="etats">
+  <header>
+    <p class="eyebrow">Chapitre 13</p>
+    <h2>Les états d'un écran</h2>
+    <p class="intro">La différence entre une démo et une application propre : lister tout ce qui peut s'afficher avant de coder.</p>
+  </header>
+
+  <p>Au lieu de plusieurs booléens (<code>loading</code>, <code>error</code>, <code>notFound</code>…) qui peuvent se contredire, un <strong>type union</strong> liste les états possibles. Un seul est vrai à la fois.</p>
+  <div class="pair">
+    <script type="text/x-code" data-lang="typescript" data-file="note-detail-page.ts">
+      type DetailState =
+        | { status: 'loading' }
+        | { status: 'success'; note: Note }   // note n'existe QUE ici
+        | { status: 'not-found' }
+        | { status: 'error' };
+    </script>
+    <script type="text/x-code" data-lang="java" data-file="L'équivalent Java 21">
+      sealed interface DetailState {
+        record Loading() implements DetailState {}
+        record Success(Note note) implements DetailState {}
+        record NotFound() implements DetailState {}
+        record Error() implements DetailState {}
+      }
+    </script>
+  </div>
+  <p>Dans <code>@case ('success')</code>, TypeScript sait que <code>current.note</code> existe ; ailleurs, il refuse de compiler si tu l'utilises. Impossible d'afficher une note inexistante.</p>
+
+  <h3>Tous les états de Brainers</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Écran</th><th>États possibles</th></tr></thead>
+      <tbody>
+        <tr><td>Recherche</td><td>rien cherché · recherche en cours · résultats · aucun résultat · erreur</td></tr>
+        <tr><td>Formulaire</td><td>invalide · valide · envoi en cours · titre déjà pris (409) · note disparue (404) · erreur serveur</td></tr>
+        <tr><td>Détail : la note</td><td>chargement · note affichée · introuvable (404) · erreur</td></tr>
+        <tr><td>Détail : l'action</td><td>lecture · modification · confirmation de suppression · suppression en cours · suppression échouée</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Deux questions séparées dans le détail</h3>
+  <script type="text/x-code" data-lang="typescript" data-file="note-detail-page.ts">
+    type Mode = 'read' | 'edit' | 'confirm-delete';   // que fait l'utilisateur ?
+
+    protected readonly mode = signal<Mode>('read');
+    protected readonly deleting = signal(false);       // pendant la requête DELETE
+    protected readonly deleteFailed = signal(false);   // la dernière suppression a échoué
+  </script>
+  <p>Le chargement vient du back, le mode vient des clics : deux types. On ne regarde le mode que dans l'état <code>success</code>, puisqu'on ne peut pas modifier une note qui n'est pas chargée.</p>
+
+  <h3><code>linkedSignal</code> : un état qu'on peut corriger</h3>
+  <p><code>toSignal()</code> donne un signal en lecture seule. Or, après une modification, le back renvoie la note à jour et on veut l'afficher sans tout recharger. <code>linkedSignal</code> suit une source, mais accepte un <code>set()</code> :</p>
+  <script type="text/x-code" data-lang="typescript" data-file="note-detail-page.ts">
+    protected readonly state = linkedSignal(() => this.loaded());   // suit le chargement…
+
+    protected onSaved(note: Note): void {
+      this.state.set({ status: 'success', note });                   // …et accepte une correction
+      this.mode.set('read');
+    }
+  </script>
+  <p>Si l'URL change, <code>loaded</code> change, et <code>state</code> repart de la nouvelle valeur : la correction locale est oubliée, ce qui est voulu.</p>
+  <div class="callout">
+    <p class="lbl">Une exception assumée</p>
+    <p>Dans la recherche, <code>loading</code> est un signal à part, pas un état de plus. Pendant une nouvelle recherche, on veut <strong>garder les anciens résultats affichés</strong> sous le spinner, sinon la liste clignoterait. Règle : un type d'état par défaut, une information séparée seulement quand elle doit coexister avec les autres.</p>
+  </div>
+</section>
+
+<!-- =============================== 14 =============================== -->
+<section class="chapter" id="pas-a-pas">
+  <header>
+    <p class="eyebrow">Chapitre 14</p>
+    <h2>Trois clics, pas à pas</h2>
+    <p class="intro">Tout ce que tu as vu, en mouvement. Choisis un clic, puis avance étape par étape : chaque étape montre le fichier concerné et le code qui s'exécute.</p>
+  </header>
+
+  <div class="stepper" id="stepper">
+    <div class="scenarios" role="group" aria-label="Choisir un clic">
+      <button class="btn" type="button" data-scenario="search" aria-pressed="true">Rechercher « java »</button>
+      <button class="btn" type="button" data-scenario="edit" aria-pressed="false">Modifier une note</button>
+      <button class="btn" type="button" data-scenario="delete" aria-pressed="false">Supprimer une note</button>
+    </div>
+    <div class="step-head"><span class="tag" id="step-tag"></span><span class="step-file" id="step-count"></span></div>
+    <h3 class="step-title" id="step-title" style="margin-top:0"></h3>
+    <p class="step-text" id="step-text"></p>
+    <figure class="code"><figcaption><span id="step-caption"></span><span class="lang" id="step-lang"></span></figcaption><pre><code id="step-code"></code></pre></figure>
+    <div class="step-nav">
+      <button class="btn" type="button" id="step-prev">← Précédent</button>
+      <div class="dots" id="step-dots" aria-label="Étapes"></div>
+      <button class="btn" type="button" id="step-next">Suivant →</button>
+    </div>
+  </div>
+</section>
+
+<!-- =============================== 15 =============================== -->
+<section class="chapter" id="back">
+  <header>
+    <p class="eyebrow">Chapitre 15</p>
+    <h2>Le lien avec le back</h2>
+    <p class="intro">Comment une requête du navigateur atteint Spring, et ce que le front fait de chaque réponse.</p>
+  </header>
+
+  <h3>Pourquoi un proxy, et pourquoi <code>/api</code></h3>
+  <p><strong>Le problème, CORS.</strong> Le front est servi par <code>localhost:4200</code>, le back par <code>localhost:8080</code>. Pour le navigateur, ce sont deux origines différentes : par sécurité, il bloque les appels de l'un vers l'autre, sauf si le back l'autorise avec des en-têtes CORS.</p>
+  <p><strong>La solution en développement.</strong> Le navigateur appelle <code>localhost:4200/api/…</code>, sa propre origine. Le serveur de développement d'Angular relaie à Spring, de serveur à serveur, là où CORS ne s'applique pas.</p>
+  <ol class="flow">
+    <li><span class="tier">Navigateur, :4200</span><span class="what"><code>GET /api/notes?title=maven</code></span><span class="detail">Appelé par <code>NoteApi</code>.</span></li>
+    <li><span class="tier">ng serve, proxy.conf.json</span><span class="what"><code>"/api"</code> → <code>http://localhost:8080</code>, en retirant <code>/api</code></span><span class="detail">Activé par <code>proxyConfig</code> dans <code>angular.json</code>.</span></li>
+    <li><span class="tier">Spring, :8080</span><span class="what"><code>GET /notes?title=maven</code></span><span class="detail"><code>NoteController.getAll</code> → <code>NoteService</code> → <code>findByTitleContainingIgnoreCase</code> → H2.</span></li>
+    <li><span class="tier">Retour</span><span class="what"><code>200 [ { "id": 11, "title": "Maven", … } ]</code></span><span class="detail">Le même chemin en sens inverse, jusqu'à <code>result()</code>.</span></li>
+  </ol>
+  <p><strong>Pourquoi le préfixe <code>/api</code> ?</strong> La page de détail a l'URL <code>/notes/12</code>, et la route du back aussi. Sans préfixe, le serveur ne saurait pas si on demande la <em>page</em> (le HTML d'Angular) ou les <em>données</em> (le JSON de Spring). Avec <code>/api</code>, tout ce qui commence par <code>/api</code> part au back. Ton back n'a rien à changer.</p>
+
+  <h3>Le contrat</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Action</th><th>NoteApi</th><th>Requête</th><th>Réponses</th></tr></thead>
+      <tbody>
+        <tr><td>Rechercher</td><td><code>searchByTitle(title)</code></td><td><code>GET /notes?title=…</code> (vide : <code>GET /notes</code>)</td><td><code>200</code> + liste</td></tr>
+        <tr><td>Consulter</td><td><code>getById(id)</code></td><td><code>GET /notes/{id}</code></td><td><code>200</code> · <code>404</code> « Note not found »</td></tr>
+        <tr><td>Créer</td><td><code>create(request)</code></td><td><code>POST /notes</code> + <code>{ title, content }</code></td><td><code>201</code> · <code>409</code> « Note already exist » · <code>400</code></td></tr>
+        <tr><td>Modifier</td><td><code>update(id, request)</code></td><td><code>PUT /notes/{id}</code> + <code>{ title, content }</code></td><td><code>200</code> · <code>404</code> · <code>400</code> · <code>500</code> si le titre est pris</td></tr>
+        <tr><td>Supprimer</td><td><code>delete(id)</code></td><td><code>DELETE /notes/{id}</code></td><td><code>204</code> · <code>404</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Ce que voit l'utilisateur</h3>
+  <p>Le front lit le <strong>code HTTP</strong>, jamais le texte du message, qui peut changer côté back.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Situation</th><th>Réponse</th><th>Affichage</th></tr></thead>
+      <tbody>
+        <tr><td>Recherche</td><td><code>200</code> + liste</td><td>Les notes (10 max), ou « Aucune note trouvée. »</td></tr>
+        <tr><td>Note ouverte</td><td><code>200</code></td><td>La carte, avec « Modifier » et « Supprimer »</td></tr>
+        <tr><td>Note inexistante, ou URL <code>/notes/abc</code></td><td><code>404</code>, ou aucun appel</td><td>« Note introuvable »</td></tr>
+        <tr><td>Titre déjà pris à la création</td><td><code>409</code></td><td>« Une note porte déjà ce titre. » sous le champ</td></tr>
+        <tr><td>Données refusées</td><td><code>400</code></td><td>Alerte « Le serveur a refusé la note… »</td></tr>
+        <tr><td>Note modifiée</td><td><code>200</code></td><td>La carte à jour, nouvelle date de modification</td></tr>
+        <tr><td>Note supprimée</td><td><code>204</code></td><td>Retour à l'accueil</td></tr>
+        <tr><td>Back arrêté ou planté</td><td><code>500</code>, <code>502</code>, <code>0</code></td><td>Alerte « Vérifie que le back Spring est démarré »</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Une histoire vraie : la date vide</h3>
+  <p>Le back envoie des <code>LocalDateTime</code> en texte ISO, que le pipe <code>date</code> sait lire. Jackson nomme les clés du JSON d'après les composants du record <code>NoteResponse</code> : la clé est <code>lastUpdateAt</code>.</p>
+  <script type="text/x-code" data-lang="json" data-file="GET /api/notes/11">
+    {
+      "id": 11,
+      "title": "Maven",
+      "content": "Un outil de gestion et d'automatisation…",
+      "createdAt": "2026-10-21T14:18:02.512847",
+      "lastUpdateAt": "2026-10-21T14:18:02.513011"
+    }
+  </script>
+  <p>Avant, <code>NoteResponse</code> était une classe avec un getter <code>getLastUpDateTime()</code>, et la clé s'appelait <code>lastUpDateTime</code>. Quand le back est passé au record, le front a continué à lire l'ancien nom. Aucune erreur, nulle part : « Modifiée le » était simplement vide. C'est la limite vue au <a href="#typescript">chapitre 2</a> : les types TypeScript ne vérifient rien à l'exécution. La parade : un seul fichier recopie le contrat (<code>note.model.ts</code>), et on le met à jour dès que le back change.</p>
+
+  <div class="callout trap">
+    <p class="lbl">À corriger côté back</p>
+    <p>Modifier une note avec le titre d'une autre renvoie <code>500</code>. <code>create()</code> vérifie le doublon et lève <code>NoteAlreadyExistsException</code> (409), <code>update()</code> non : c'est la contrainte <code>unique</code> de la base qui refuse. La correction est l'<a href="#ex-back">exercice 5</a>. Le front gère déjà le 409 : il affichera le bon message sans rien changer.</p>
+  </div>
+</section>
+
+<!-- =============================== 16 =============================== -->
+<section class="chapter" id="html-css">
+  <header>
+    <p class="eyebrow">Chapitre 16</p>
+    <h2>HTML et CSS : Tailwind et Spartan UI</h2>
+    <p class="intro">Il n'y a presque pas de CSS écrit à la main dans Brainers. Le style vient de classes utilitaires Tailwind et de composants Spartan UI.</p>
+  </header>
+
+  <h3>Tailwind : une classe, un effet</h3>
+  <p>Tailwind fournit des <strong>classes utilitaires</strong> : chacune fait une seule chose, et on les combine dans le HTML. Au build, Tailwind lit tes templates et ne génère que le CSS des classes utilisées. Il est branché dans <code>src/styles.css</code> (<code>@import 'tailwindcss/…'</code>) et via PostCSS (<code>.postcssrc.json</code>).</p>
+  <script type="text/x-code" data-lang="xml" data-file="notes/pages/home-page/home-page.html">
+    <section class="flex flex-col gap-6">
+      <header class="flex flex-col gap-1">
+        <h1 class="text-2xl font-semibold tracking-tight">Tes notes</h1>
+        <p class="text-muted-foreground text-sm">
+          Retrouve une notion en quelques secondes, ou ajoute-en une nouvelle.
+        </p>
+      </header>
+
+      <app-note-search>
+        <a hlmBtn variant="outline" size="lg" routerLink="/notes/new">Créer</a>
+      </app-note-search>
+    </section>
+  </script>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Classe</th><th>CSS produit (en gros)</th><th>Où</th></tr></thead>
+      <tbody>
+        <tr><td><code>flex flex-col gap-6</code></td><td><code>display: flex; flex-direction: column; gap: 1.5rem</code></td><td>Empiler l'en-tête et la recherche</td></tr>
+        <tr><td><code>text-2xl font-semibold tracking-tight</code></td><td>Taille 1.5rem, graisse 600, lettres resserrées</td><td>Les titres de page</td></tr>
+        <tr><td><code>text-muted-foreground text-sm</code></td><td>Couleur « texte secondaire » du thème, 0.875rem</td><td>Sous-titres, aides</td></tr>
+        <tr><td><code>mx-auto w-full max-w-2xl px-4 py-8</code></td><td>Colonne centrée de 42rem max, marges intérieures</td><td><code>app.html</code></td></tr>
+        <tr><td><code>min-h-dvh</code></td><td>Au moins la hauteur de l'écran</td><td><code>app.html</code></td></tr>
+        <tr><td><code>sr-only</code></td><td>Invisible à l'écran, lu par les lecteurs d'écran</td><td>Le label de la recherche</td></tr>
+        <tr><td><code>whitespace-pre-wrap leading-relaxed</code></td><td>Garde les retours à la ligne, interligne aéré</td><td>Le contenu d'une note</td></tr>
+        <tr><td><code>justify-end gap-2</code></td><td>Aligne les enfants à droite</td><td>Le pied de la carte</td></tr>
+        <tr><td><code>me-auto</code></td><td><code>margin-inline-end: auto</code> : pousse ce qui suit à droite</td><td>« Supprimer définitivement cette note ? »</td></tr>
+        <tr><td><code>self-start</code></td><td>Ne pas s'étirer dans une colonne flex</td><td>Le lien « Retour aux notes »</td></tr>
+        <tr><td><code>sm:…</code>, <code>md:…</code>, <code>dark:…</code></td><td>Appliquer seulement à partir de 640 px, 768 px, ou en thème sombre</td><td>Dans <code>libs/ui</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Le thème : des variables CSS</h3>
+  <p>Les couleurs sont des variables CSS dans <code>src/styles.css</code>. Les classes Tailwind de Spartan s'y réfèrent : <code>bg-primary</code> utilise <code>--primary</code>, <code>text-muted-foreground</code> utilise <code>--muted-foreground</code>. Change une variable, tout suit.</p>
+  <script type="text/x-code" data-lang="css" data-file="src/styles.css (extrait)">
+    :root {
+      --radius: 0.625rem;
+      --background: oklch(1 0 0);            /* blanc */
+      --foreground: oklch(0.145 0 0);        /* presque noir */
+      --primary: oklch(0.205 0 0);           /* le bouton "Rechercher" */
+      --muted-foreground: oklch(0.556 0 0);  /* textes secondaires */
+      --destructive: oklch(0.577 0.245 27.325);  /* rouge de "Supprimer" */
+      --border: oklch(0.922 0 0);
+    }
+
+    :root.dark { --background: oklch(0.145 0 0); --foreground: oklch(0.985 0 0); /* … */ }
+  </script>
+  <p><code>oklch(L C H)</code> décrit une couleur par sa luminosité, sa saturation et sa teinte. Le thème sombre existe déjà (<code>:root.dark</code>) ; il suffirait d'ajouter la classe <code>dark</code> sur <code>&lt;html&gt;</code> pour l'activer.</p>
+
+  <h3>Spartan UI : deux couches</h3>
+  <p>Spartan est le portage Angular de <em>shadcn/ui</em>.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Couche</th><th>Où elle vit</th><th>Ce qu'elle apporte</th><th>Tu la modifies ?</th></tr></thead>
+      <tbody>
+        <tr><td><b>brain</b> (<code>@spartan-ng/brain</code>)</td><td><code>node_modules</code></td><td>Le comportement et l'accessibilité : clavier, ARIA, état des champs</td><td>Non</td></tr>
+        <tr><td><b>helm</b> (<code>@spartan-ng/helm/…</code>)</td><td><code>libs/ui/</code>, copié dans ton projet</td><td>Le style : des classes Tailwind posées sur tes éléments</td><td>Oui, c'est ton code</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><code>import { HlmButtonImports } from '@spartan-ng/helm/button'</code> ressemble à un paquet npm, mais c'est un <strong>alias</strong> déclaré dans <code>tsconfig.json</code> qui pointe vers <code>libs/ui/button/src/index.ts</code>.</p>
+  <p>Presque tous les composants Spartan sont des <strong>directives</strong> : un attribut posé sur une balise HTML normale. <code>&lt;button hlmBtn variant="destructive"&gt;</code> reste un vrai <code>&lt;button&gt;</code>. Voici ce que fait <code>hlmBtn</code> :</p>
+  <script type="text/x-code" data-lang="typescript" data-file="libs/ui/button/src/lib/hlm-button.ts (simplifié)">
+    export const buttonVariants = cva('rounded-lg border text-sm font-medium inline-flex items-center …', {
+      variants: {
+        variant: {
+          default: 'bg-primary text-primary-foreground',
+          outline: 'border-border bg-background hover:bg-muted',
+          ghost: 'hover:bg-muted',
+          destructive: 'bg-destructive/10 hover:bg-destructive/20 text-destructive',
+        },
+        size: { default: 'h-8 gap-1.5 px-2.5', sm: 'h-7 …', lg: 'h-9 gap-1.5 px-2.5' },
+      },
+    });
+
+    @Directive({ selector: 'button[hlmBtn], a[hlmBtn]' })
+    export class HlmButton {
+      readonly variant = input<ButtonVariants['variant']>('default');
+      readonly size = input<ButtonVariants['size']>('default');
+
+      constructor() {
+        classes(() => buttonVariants({ variant: this.variant(), size: this.size() }));
+      }
+    }
+  </script>
+  <p>Une directive a des entrées, comme un composant (<code>variant</code>, <code>size</code>). <code>cva</code> choisit les classes Tailwind selon ces entrées, et <code>classes()</code> les pose sur l'élément. Pour changer l'apparence de tous les boutons « Supprimer » de l'appli, tu modifies la ligne <code>destructive</code> : c'est ton fichier.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Composant Spartan</th><th>Utilisé pour</th></tr></thead>
+      <tbody>
+        <tr><td>Button (<code>hlmBtn</code>)</td><td>Tous les boutons, et les liens « Créer » et « Retour aux notes »</td></tr>
+        <tr><td>Input Group + Input</td><td>La barre de recherche avec son icône et son spinner</td></tr>
+        <tr><td>Item (<code>hlmItem</code>)</td><td>Une ligne de résultat (le contenu est coupé à 2 lignes par <code>line-clamp-2</code>)</td></tr>
+        <tr><td>Card (<code>hlmCard</code>, <code>hlmCardFooter</code>…)</td><td>La note affichée, avec ses boutons dans le pied</td></tr>
+        <tr><td>Field, Label, Input, Textarea</td><td>Le formulaire : labels, compteurs, messages d'erreur</td></tr>
+        <tr><td>Empty, Alert, Spinner</td><td>« Aucune note trouvée », erreurs serveur, chargements</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Ajouter un composant : <code>npx ng g @spartan-ng/cli:ui dialog</code>. Le CLI copie les fichiers dans <code>libs/ui/</code> et ajoute l'alias. Les icônes viennent de <code>@ng-icons/lucide</code> : on les déclare (<code>providers: [provideIcons({ lucideSearch })]</code>), puis <code>&lt;ng-icon name="lucideSearch" /&gt;</code>.</p>
+
+  <h3>L'accessibilité, sans effort particulier</h3>
+  <ul>
+    <li><code>&lt;label for="note-search" class="sr-only"&gt;</code> : la barre a un nom pour les lecteurs d'écran, sans texte visible.</li>
+    <li><code>role="search"</code> sur le formulaire de recherche, <code>aria-live="polite"</code> sur la zone de résultats : les changements sont annoncés.</li>
+    <li><code>aria-hidden="true"</code> sur les icônes décoratives, <code>aria-label</code> sur les spinners.</li>
+    <li><code>type="button"</code> sur tous les boutons qui ne doivent pas envoyer un formulaire.</li>
+  </ul>
+  <div class="callout trap">
+    <p class="lbl">Piège HTML classique</p>
+    <p>Dans un <code>&lt;form&gt;</code>, un <code>&lt;button&gt;</code> sans attribut <code>type</code> est un bouton <strong>submit</strong>. Sans <code>type="button"</code>, « Annuler » enverrait le formulaire.</p>
+  </div>
+
+  <h3>Ce que le navigateur reçoit</h3>
+  <p>Ouvre les outils de développement (<kbd>F12</kbd>), onglet Éléments : les balises de tes composants sont dans le DOM, autour du HTML de leur template.</p>
+  <script type="text/x-code" data-lang="xml" data-file="Inspecteur du navigateur (simplifié)">
+    <app-root>
+      <div class="flex min-h-dvh flex-col">
+        <header class="border-b">…</header>
+        <main class="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
+          <router-outlet></router-outlet>
+          <app-home-page>
+            <section class="flex flex-col gap-6">
+              <app-note-search>
+                <form role="search" class="flex flex-col gap-3">…</form>
+                <div class="mt-6" aria-live="polite">…</div>
+              </app-note-search>
+            </section>
+          </app-home-page>
+        </main>
+      </div>
+    </app-root>
+  </script>
+  <p>Le routeur place la page juste après <code>&lt;router-outlet&gt;</code>, pas dedans.</p>
+</section>
+
+<!-- =============================== 17 =============================== -->
+<section class="chapter" id="tests">
+  <header>
+    <p class="eyebrow">Chapitre 17</p>
+    <h2>Les tests</h2>
+    <p class="intro">42 tests, dans les fichiers <code>*.spec.ts</code> à côté du code qu'ils testent.</p>
+  </header>
+
+  <p>Les tests utilisent <strong>Vitest</strong> (le moteur, comme JUnit) et <strong>TestBed</strong> (l'outil d'Angular qui crée un composant dans un faux navigateur, <code>jsdom</code>). <code>HttpTestingController</code> remplace le back : aucune requête ne part, c'est le test qui choisit la réponse. Même principe qu'un mock Mockito.</p>
+  <script type="text/x-code" data-lang="typescript" data-file="notes/pages/note-detail-page/note-detail-page.spec.ts">
+    it('supprime la note après confirmation, puis revient à l’accueil', () => {
+      const { http, click } = openMaven();          // page de Maven, note déjà chargée
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+      click('Supprimer');                            // 1er clic : la confirmation s'affiche
+      click('Supprimer');                            // 2e clic : on confirme
+
+      http
+        .expectOne({ url: '/api/notes/12', method: 'DELETE' })   // une requête DELETE est partie ?
+        .flush(null, { status: 204, statusText: 'No Content' }); // le "back" répond 204
+      expect(navigate).toHaveBeenCalledWith(['/']);              // on revient à l'accueil ?
+      http.verify();                                             // aucune autre requête
+    });
+  </script>
+
+  <h3>Trois idées à retenir</h3>
+  <ul>
+    <li><strong>Tester comme un utilisateur.</strong> On remplit les champs du DOM, on clique, on lit le texte affiché. On ne touche pas aux propriétés internes. Si tu changes l'implémentation sans changer le comportement, les tests restent verts.</li>
+    <li><strong>Vérifier aussi ce qui ne doit pas arriver.</strong> <code>http.expectNone()</code> : taper sans cliquer n'envoie rien. <code>http.verify()</code> échoue si une requête inattendue est partie.</li>
+    <li><strong>Redessiner à la main.</strong> Dans un test, <code>fixture.detectChanges()</code> force Angular à mettre à jour le DOM après une action ou une réponse.</li>
+  </ul>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Fichier</th><th>Ce qu'il vérifie</th></tr></thead>
+      <tbody>
+        <tr><td><code>note-api.spec.ts</code></td><td>Chaque méthode envoie la bonne requête : méthode, URL, paramètres, corps</td></tr>
+        <tr><td><code>not-blank.validator.spec.ts</code></td><td>Les cas du validateur, sans Angular</td></tr>
+        <tr><td><code>note-search.spec.ts</code></td><td>Rien ne part sans clic, champ vide = toutes les notes, 10 max, erreur puis reprise, annulation par <code>switchMap</code></td></tr>
+        <tr><td><code>note-form.spec.ts</code></td><td>Création : validation, 409, 400, 500, Annuler. Modification : pré-rempli, PUT, 404</td></tr>
+        <tr><td><code>note-detail-page.spec.ts</code></td><td>Affichage, 404, id invalide, Modifier, Supprimer avec confirmation et échec</td></tr>
+        <tr><td><code>note-create-page.spec.ts</code>, <code>home-page.spec.ts</code></td><td>La navigation après création ou annulation ; le lien « Créer »</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <script type="text/x-code" data-lang="bash">
+    npm test                 # en continu, relancé à chaque sauvegarde
+    npm run test:ci          # une seule fois
+    npm run test:coverage    # + rapport dans coverage/index.html, échoue sous 80 %
+  </script>
+  <p>La couverture est à 100 % aujourd'hui, mais l'objectif reste le seuil de 80 %. La vraie question est : un bug ferait-il échouer un test ? Essai fait : afficher 11 résultats au lieu de 10 fait échouer « affiche au maximum 10 résultats ».</p>
+</section>
+
+<!-- =============================== 18 =============================== -->
+<section class="chapter" id="exercices">
+  <header>
+    <p class="eyebrow">Chapitre 18</p>
+    <h2>À toi de jouer</h2>
+    <p class="intro">Le meilleur moyen d'apprendre : modifier l'appli. Lance <code>npm start</code> et <code>npm test</code> dans deux terminaux, puis fais ces exercices dans l'ordre. Chaque solution est cachée sous l'énoncé.</p>
+  </header>
+
+  <article class="exercise">
+    <p class="level">Exercice 1 · template</p>
+    <h3 style="margin-top:0">Afficher le nombre de résultats</h3>
+    <p>Au-dessus de la liste, affiche « 5 notes trouvées » (ou « 1 note trouvée »). L'état <code>success</code> contient déjà <code>total</code>.</p>
+    <details><summary>Voir une solution</summary><div>
+      <p>Dans <code>note-search.html</code>, cas <code>'success'</code>, juste avant <code>&lt;app-note-list&gt;</code> :</p>
+      <script type="text/x-code" data-lang="xml">
+        @if (current.notes.length > 0) {
+          <p class="text-muted-foreground mb-2 px-1 text-sm">
+            {{ current.total }} {{ current.total > 1 ? 'notes trouvées' : 'note trouvée' }}
+          </p>
+          <app-note-list [notes]="current.notes" />
+      </script>
+      <p>Une expression ternaire suffit ici. Si la logique grossit, crée une méthode dans la classe.</p>
+    </div></details>
+  </article>
+
+  <article class="exercise">
+    <p class="level">Exercice 2 · Tailwind</p>
+    <h3 style="margin-top:0">Les boutons sur la même ligne que la barre</h3>
+    <p>Sur un écran large, place « Rechercher » et « Créer » à droite de la barre. Sur mobile, garde-les dessous.</p>
+    <details><summary>Voir une solution</summary><div>
+      <p>Dans <code>note-search.html</code>, deux classes en plus : le formulaire passe en ligne à partir de 640 px (<code>sm:flex-row</code>), et la barre prend la place restante (<code>sm:flex-1</code>).</p>
+      <script type="text/x-code" data-lang="xml">
+        <form role="search" class="flex flex-col gap-3 sm:flex-row sm:items-center" (submit)="submit($event)">
+          …
+          <div hlmInputGroup class="h-11 sm:flex-1">
+      </script>
+      <p>Le label <code>sr-only</code> est positionné en absolu : il ne prend pas de place dans la ligne.</p>
+    </div></details>
+  </article>
+
+  <article class="exercise">
+    <p class="level">Exercice 3 · signals et tests</p>
+    <h3 style="margin-top:0">Bloquer « Rechercher » pendant une recherche, et lire le test qui casse</h3>
+    <p>Désactive le bouton tant qu'une recherche est en cours. Puis regarde <code>npm test</code> : un test existant passe au rouge. Lequel, et pourquoi ? Que choisis-tu ?</p>
+    <details><summary>Voir une solution</summary><div>
+      <script type="text/x-code" data-lang="xml">
+        <button hlmBtn size="lg" type="submit" [disabled]="loading()">Rechercher</button>
+      </script>
+      <p>Le test « annule la recherche précédente si on relance avant la réponse » échoue. Il clique deux fois avant la première réponse ; avec le bouton désactivé, le deuxième clic ne fait plus rien, et il n'y a qu'une requête au lieu de deux.</p>
+      <p>Les deux choix se défendent. Soit tu gardes le bouton actif, car <code>switchMap</code> gère déjà les recherches qui se chevauchent. Soit tu préfères bloquer, et tu remplaces ce test par un autre qui vérifie le blocage :</p>
+      <script type="text/x-code" data-lang="typescript" data-file="note-search.spec.ts">
+        it('désactive "Rechercher" pendant la recherche', () => {
+          type('java');
+          clickSearch();
+          const button = page.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+          expect(button.disabled).toBe(true);
+
+          http.expectOne((r) => r.url === '/api/notes').flush([]);
+          fixture.detectChanges();
+          expect(button.disabled).toBe(false);
+        });
+      </script>
+      <p>La leçon : un test qui casse n'est pas forcément un bug. Ici, il signale une décision que tu prends sur le comportement.</p>
+    </div></details>
+  </article>
+
+  <article class="exercise">
+    <p class="level">Exercice 4 · routeur</p>
+    <h3 style="margin-top:0">Garder la recherche dans l'URL</h3>
+    <p>Après une recherche, l'URL devient <code>/?q=java</code>. Recharger la page, ou revenir avec le bouton « précédent » du navigateur, retrouve les résultats.</p>
+    <details><summary>Voir une esquisse</summary><div>
+      <p>Dans <code>note-search.ts</code>. Cette esquisse compile et ne casse aucun test existant, mais c'est à toi de la finir et de la tester.</p>
+      <script type="text/x-code" data-lang="typescript">
+        private readonly router = inject(Router);
+        private readonly route = inject(ActivatedRoute);
+
+        constructor() {
+          // Au chargement de /?q=java : remplir le champ et relancer la recherche.
+          const q = this.route.snapshot.queryParamMap.get('q');
+          if (q !== null) {
+            this.searchControl.setValue(q);
+            this.searches.next(q.trim());
+          }
+        }
+
+        protected submit(event: Event): void {
+          event.preventDefault();
+          const term = this.searchControl.value.trim();
+          this.router.navigate([], { queryParams: { q: term }, replaceUrl: true });   // met à jour l'URL
+          this.searches.next(term);
+        }
+      </script>
+      <p>Il reste une question pour toi : le lien « Retour aux notes » pointe vers <code>/</code>, sans <code>q</code>. Il perd donc la recherche, contrairement au bouton « précédent » du navigateur. À toi de choisir le comportement que tu veux, puis d'écrire le test.</p>
+    </div></details>
+  </article>
+
+  <article class="exercise" id="ex-back">
+    <p class="level">Exercice 5 · back Spring</p>
+    <h3 style="margin-top:0">Renvoyer 409 à la modification</h3>
+    <p>Dans le repo <code>brainers</code>, fais en sorte que <code>NoteService.update()</code> lève <code>NoteAlreadyExistsException</code> quand le titre est déjà pris par une <em>autre</em> note.</p>
+    <details><summary>Voir une solution</summary><div>
+      <script type="text/x-code" data-lang="java" data-file="demo/src/main/java/com/brainers/demo/service/NoteService.java">
+        public NoteResponse update(Long id, NoteRequest request) {
+            Note note = repository.findById(id).orElseThrow(() -> new NoteNotFoundException(MessageException.NOTE_NOT_FOUND.getMessageException()));
+
+            repository.findNoteByTitle(request.title())
+                .filter(other -> !other.getId().equals(id))   // garder son propre titre est permis
+                .ifPresent(other -> {
+                    throw new NoteAlreadyExistsException(MessageException.NOTE_ALREADY_EXIST.getMessageException());
+                });
+
+            note.setTitle(request.title());
+            note.setContent(request.content());
+            // … inchangé
+        }
+      </script>
+      <p>Côté front, rien à faire : <code>NoteForm</code> gère déjà le 409 et affichera « Une note porte déjà ce titre. » en modification comme en création.</p>
+    </div></details>
+  </article>
+</section>
+
+<!-- =============================== 19 =============================== -->
+<section class="chapter" id="deboguer">
+  <header>
+    <p class="eyebrow">Chapitre 19</p>
+    <h2>Déboguer</h2>
+    <p class="intro">Les outils pour comprendre ce qui se passe, et les erreurs que tu vas rencontrer.</p>
+  </header>
+
+  <ul>
+    <li><strong>Console</strong> (<kbd>F12</kbd>) : les erreurs Angular ont un code, <code>NG0…</code> ou <code>NG8…</code>, documenté sur angular.dev. Un <code>console.log(…)</code> dans une méthode marche comme un <code>System.out.println</code>.</li>
+    <li><strong>Réseau</strong> (<kbd>F12</kbd>, onglet Réseau) : chaque appel à <code>/api</code>, son code HTTP et sa réponse JSON. Le premier réflexe quand « la recherche a échoué ».</li>
+    <li><strong>Angular DevTools</strong> : une extension Chrome ou Firefox qui affiche l'arbre des composants et la valeur de leurs signals.</li>
+    <li><strong>Dans un template</strong> : <code>{{ state() | json }}</code> affiche un objet en entier (ajoute <code>JsonPipe</code> aux <code>imports</code>, et retire-le après).</li>
+  </ul>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Symptôme</th><th>Cause</th><th>Correction</th></tr></thead>
+      <tbody>
+        <tr><td><code>NG8001: 'app-note-list' is not a known element</code></td><td>Composant absent des <code>imports</code></td><td>L'ajouter dans <code>imports: [ … ]</code></td></tr>
+        <tr><td><code>Can't bind to 'formControl' since it isn't a known property of 'input'</code></td><td><code>ReactiveFormsModule</code> absent des <code>imports</code></td><td>L'ajouter</td></tr>
+        <tr><td><code>NG0201: No provider for HttpClient</code></td><td><code>provideHttpClient()</code> manquant (souvent dans un test)</td><td>L'ajouter aux <code>providers</code></td></tr>
+        <tr><td>L'écran ne se met pas à jour après une réponse</td><td>Variable ordinaire modifiée dans un callback</td><td>En faire un signal</td></tr>
+        <tr><td>Un <code>@if</code> est toujours vrai</td><td>Parenthèses oubliées : <code>loading</code> au lieu de <code>loading()</code></td><td>Appeler le signal</td></tr>
+        <tr><td>La page se recharge quand on envoie un formulaire</td><td><code>preventDefault()</code> oublié sur un <code>(submit)</code> natif</td><td>L'appeler, ou utiliser <code>[formGroup]</code> + <code>(ngSubmit)</code></td></tr>
+        <tr><td>« La recherche a échoué » partout</td><td>Le back n'est pas démarré</td><td>Le lancer, vérifier <code>http://localhost:8080/notes</code></td></tr>
+        <tr><td>Tes modifications n'apparaissent pas</td><td><code>npm start</code> lancé depuis un autre dossier</td><td>Le lancer depuis <code>front/</code></td></tr>
+        <tr><td>Un import <code>@spartan-ng/helm/…</code> souligné en rouge</td><td>L'éditeur n'a pas relu <code>tsconfig.json</code></td><td>Redémarrer le serveur TypeScript de VS Code</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- =============================== Glossaire =============================== -->
+<section class="chapter" id="glossaire">
+  <header>
+    <p class="eyebrow">Référence</p>
+    <h2>Glossaire</h2>
+  </header>
+  <dl class="glossary">
+    <dt>Composant</dt><dd>Une classe + un template + une balise : un morceau d'écran.</dd>
+    <dt>Template</dt><dd>Le HTML du composant, enrichi de <code>{{ }}</code>, <code>[ ]</code>, <code>( )</code>, <code>@if</code>, <code>@for</code>, <code>@switch</code>.</dd>
+    <dt>Directive</dt><dd>Un comportement ajouté à un élément existant : <code>hlmBtn</code> sur un <code>&lt;button&gt;</code>, <code>routerLink</code> sur un <code>&lt;a&gt;</code>.</dd>
+    <dt>Standalone</dt><dd>Un composant qui déclare lui-même ce qu'il utilise dans <code>imports</code>, sans <code>NgModule</code>.</dd>
+    <dt>Pipe</dt><dd>Une transformation d'affichage : <code>date</code>, <code>number</code>, <code>json</code>.</dd>
+    <dt>Signal</dt><dd>Une valeur qui prévient quand elle change ; on la lit en l'appelant, <code>loading()</code>.</dd>
+    <dt>linkedSignal</dt><dd>Un signal qui suit une source, mais qu'on peut aussi modifier avec <code>set()</code>.</dd>
+    <dt>Entrée, sortie</dt><dd><code>input()</code> reçoit une donnée du parent ; <code>output()</code> émet un événement vers lui.</dd>
+    <dt>Projection de contenu</dt><dd>Passer du HTML à un enfant entre ses balises ; il l'affiche à l'endroit de son <code>&lt;ng-content /&gt;</code>.</dd>
+    <dt>Hook de cycle de vie</dt><dd>Une méthode qu'Angular appelle à un moment précis : <code>ngOnInit</code>, juste après que les entrées sont connues.</dd>
+    <dt>Service</dt><dd>Une classe sans affichage, instance unique, obtenue avec <code>inject()</code>.</dd>
+    <dt>Injection de dépendances</dt><dd>Angular fournit les objets dont une classe a besoin, comme Spring.</dd>
+    <dt>Provider</dt><dd>Une déclaration qui rend une brique disponible : <code>provideRouter</code>, <code>provideHttpClient</code>.</dd>
+    <dt>Observable</dt><dd>Un flux de valeurs dans le temps, qui ne fait rien sans abonnement.</dd>
+    <dt>Subject</dt><dd>Un Observable dans lequel on pousse soi-même les valeurs avec <code>next()</code>.</dd>
+    <dt>Opérateur RxJS</dt><dd>Une étape de traitement d'un Observable : <code>map</code>, <code>switchMap</code>, <code>catchError</code>.</dd>
+    <dt>SPA</dt><dd>Une seule page HTML ; le routeur échange les composants affichés.</dd>
+    <dt>Zoneless</dt><dd>Sans <code>zone.js</code> : Angular redessine quand un signal, un événement ou une entrée change.</dd>
+    <dt>Proxy de développement</dt><dd><code>ng serve</code> relaie <code>/api</code> vers Spring, ce qui évite CORS.</dd>
+    <dt>CORS</dt><dd>Règle du navigateur qui bloque les appels entre origines différentes, sauf autorisation du serveur.</dd>
+    <dt>Classe utilitaire</dt><dd>Une classe Tailwind qui fait une seule chose : <code>flex</code>, <code>gap-2</code>, <code>text-sm</code>.</dd>
+    <dt>brain / helm</dt><dd>Les deux couches de Spartan : le comportement (dans npm) et le style (copié dans <code>libs/ui</code>).</dd>
+  </dl>
+
+  <div class="footer">
+    <p><strong>Pour aller plus loin.</strong> Le tutoriel officiel <a href="https://angular.dev/tutorials/learn-angular" target="_blank" rel="noopener">angular.dev/tutorials</a>, le guide des <a href="https://angular.dev/guide/signals" target="_blank" rel="noopener">signals</a>, la doc de <a href="https://rxjs.dev/guide/overview" target="_blank" rel="noopener">RxJS</a>, les composants <a href="https://www.spartan.ng" target="_blank" rel="noopener">Spartan UI</a>, et la doc <a href="https://tailwindcss.com/docs" target="_blank" rel="noopener">Tailwind CSS</a>.</p>
+    <p>Pour le détail de chaque choix d'architecture, lis aussi <code>front/GUIDE.md</code> dans le repo.</p>
+  </div>
+</section>
+
+    </main>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function () {
+  var LANG_LABEL = { typescript: 'TypeScript', xml: 'HTML', css: 'CSS', json: 'JSON', java: 'Java', bash: 'Terminal', plaintext: 'Texte' };
+
+  function dedent(text) {
+    text = text.replace(/^\s*\n/, '').replace(/\s+$/, '');
+    var lines = text.split('\n');
+    var indent = Infinity;
+    lines.forEach(function (l) { if (l.trim()) indent = Math.min(indent, l.match(/^ */)[0].length); });
+    if (!isFinite(indent)) indent = 0;
+    return lines.map(function (l) { return l.slice(indent); }).join('\n');
+  }
+
+  function highlightInto(codeEl, text, lang) {
+    if (window.hljs && lang !== 'plaintext') {
+      try { codeEl.innerHTML = hljs.highlight(text, { language: lang, ignoreIllegals: true }).value; return; } catch (e) {}
+    }
+    codeEl.textContent = text;
+  }
+
+  // 1. Les blocs de code : <script type="text/x-code"> → <figure class="code">
+  document.querySelectorAll('script[type="text/x-code"]').forEach(function (s) {
+    var lang = s.dataset.lang || 'plaintext';
+    var fig = document.createElement('figure');
+    fig.className = 'code';
+    var cap = document.createElement('figcaption');
+    var f = document.createElement('span'); f.textContent = s.dataset.file || '';
+    var l = document.createElement('span'); l.className = 'lang'; l.textContent = LANG_LABEL[lang] || lang;
+    cap.append(f, l);
+    var pre = document.createElement('pre');
+    var code = document.createElement('code');
+    highlightInto(code, dedent(s.textContent), lang);
+    pre.append(code);
+    fig.append(cap, pre);
+    s.replaceWith(fig);
+  });
+
+  // 2. L'explorateur de composants
+  var COMPONENTS = [
+    { id: 'App', level: 0, kind: 'racine', file: 'src/app/app.ts · app.html',
+      role: 'La coquille, affichée sur toutes les pages : l’en-tête « B Brainers » et l’emplacement <router-outlet /> où le routeur place la page.',
+      inputs: '—', outputs: '—', uses: 'RouterOutlet, RouterLink', calls: 'Rien', state: 'Aucun' },
+    { id: 'HomePage', level: 1, kind: 'page /', file: 'notes/pages/home-page/',
+      role: 'L’accueil : le titre « Tes notes », la recherche, et le lien « Créer » projeté dans NoteSearch.',
+      inputs: '—', outputs: '—', uses: 'NoteSearch, RouterLink, hlmBtn', calls: 'Rien (la recherche s’en charge)', state: 'Aucun' },
+    { id: 'NoteSearch', level: 2, kind: 'composant', file: 'notes/components/note-search/',
+      role: 'La barre, le bouton « Rechercher » et la zone de résultats. La recherche part au clic ou avec Entrée.',
+      inputs: 'Du contenu projeté (<ng-content />) : le lien « Créer »', outputs: '—', uses: 'NoteList, Input Group, Spinner, Empty, Alert, Button', calls: 'NoteApi.searchByTitle()',
+      state: 'searchControl (FormControl) · loading (signal) · searches (Subject) · result : idle | success | error' },
+    { id: 'NoteList', level: 3, kind: 'composant', file: 'notes/components/note-list/',
+      role: 'Affiche la liste qu’on lui donne : un lien par note vers /notes/:id. Composant de présentation, il n’appelle rien.',
+      inputs: 'notes : input.required<Note[]>()', outputs: '—', uses: 'RouterLink, Item', calls: 'Rien', state: 'Aucun' },
+    { id: 'NoteCreatePage', level: 1, kind: 'page /notes/new', file: 'notes/pages/note-create-page/',
+      role: 'La page de création : le titre « Nouvelle note » et le formulaire vide. Elle décide de la suite.',
+      inputs: '—', outputs: '—', uses: 'NoteForm, RouterLink, hlmBtn, NgIcon', calls: 'Router.navigate() : vers la note créée, ou vers l’accueil',
+      state: 'Aucun' },
+    { id: 'NoteForm', level: 2, kind: 'composant', file: 'notes/components/note-form/',
+      role: 'Le formulaire d’une note, pour créer ou modifier. Valide la saisie, envoie au back, gère les erreurs, puis prévient son parent.',
+      inputs: 'note : input<Note | null>(null) (présente : mode modification)', outputs: 'saved : output<Note>() · cancelled : output<void>()', uses: 'ReactiveFormsModule, Field, Input, Textarea, Button, Alert, Spinner', calls: 'NoteApi.create() ou NoteApi.update()',
+      state: 'form (FormGroup titre + contenu) · submitting (signal) · serverError (signal)' },
+    { id: 'NoteDetailPage', level: 1, kind: 'page /notes/:id', file: 'notes/pages/note-detail-page/',
+      role: 'Affiche une note, et permet de la modifier (le formulaire remplace la carte) ou de la supprimer (avec confirmation).',
+      inputs: 'L’id, lu dans l’URL avec ActivatedRoute.paramMap', outputs: '—', uses: 'NoteForm, Card, Button, Empty, Alert, Spinner, DatePipe', calls: 'NoteApi.getById(), NoteApi.delete(), Router.navigate()',
+      state: 'loaded (toSignal) · state (linkedSignal) : loading | success | not-found | error · mode : read | edit | confirm-delete · deleting · deleteFailed' },
+    { id: 'NoteApi', level: 0, kind: 'service', file: 'notes/data/note-api.ts',
+      role: 'Le seul endroit qui fait des appels HTTP pour les notes. Aucun composant ne connaît une URL.',
+      inputs: '—', outputs: 'Des Observables : Note[], Note, void', uses: 'HttpClient, environment.apiUrl', calls: 'GET, POST, PUT, DELETE sur /api/notes',
+      state: 'Aucun (une seule instance pour toute l’appli)' }
+  ];
+  var tree = document.getElementById('ex-tree');
+  var card = document.getElementById('ex-card');
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function showComponent(id) {
+    var c = COMPONENTS.find(function (x) { return x.id === id; });
+    tree.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.id === id)); });
+    card.innerHTML =
+      '<h4>' + esc(c.id) + '</h4>' +
+      '<p class="role">' + esc(c.role) + '</p>' +
+      '<dl>' +
+        '<dt>Fichier</dt><dd><code>' + esc(c.file) + '</code></dd>' +
+        '<dt>Reçoit</dt><dd>' + esc(c.inputs) + '</dd>' +
+        '<dt>Émet</dt><dd>' + esc(c.outputs) + '</dd>' +
+        '<dt>Utilise</dt><dd>' + esc(c.uses) + '</dd>' +
+        '<dt>Appelle</dt><dd>' + esc(c.calls) + '</dd>' +
+        '<dt>Son état</dt><dd>' + esc(c.state) + '</dd>' +
+      '</dl>';
+  }
+  COMPONENTS.forEach(function (c) {
+    var li = document.createElement('li');
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.id = c.id;
+    b.className = 'l' + c.level;
+    b.innerHTML = '<span class="nm">' + (c.level ? '└ ' : '') + esc(c.id) + '</span><span class="k">' + (c.level ? '\u00a0\u00a0' : '') + esc(c.kind) + '</span>';
+    b.addEventListener('click', function () { showComponent(c.id); });
+    li.append(b);
+    tree.append(li);
+  });
+  showComponent('HomePage');
+
+  // 3. Le pas à pas
+  var SCENARIOS = {
+    search: [
+      { tag: 'Navigateur', file: 'notes/components/note-search/note-search.html', title: 'Le clic déclenche « submit »',
+        text: 'Le bouton « Rechercher » est de type submit, dans un <form>. Le clic, ou Entrée dans le champ, déclenche l’événement submit du formulaire. Angular l’écoute avec (submit).',
+        lang: 'xml', code: '<form role="search" class="flex flex-col gap-3" (submit)="submit($event)">\n  …\n  <input hlmInputGroupInput id="note-search" type="search" [formControl]="searchControl" />\n  …\n  <button hlmBtn size="lg" type="submit">Rechercher</button>\n</form>' },
+      { tag: 'Classe', file: 'notes/components/note-search/note-search.ts', title: 'submit() pousse le texte dans le Subject',
+        text: 'preventDefault() empêche le navigateur de recharger la page. Le texte du champ, nettoyé de ses espaces, part dans searches.',
+        lang: 'typescript', code: 'protected submit(event: Event): void {\n  event.preventDefault();\n  this.searches.next(this.searchControl.value.trim());   // "java"\n}' },
+      { tag: 'RxJS', file: 'notes/components/note-search/note-search.ts', title: 'switchMap lance la recherche',
+        text: 'Le pipeline écoute searches. switchMap appelle search(\'java\') et s’abonne au résultat : c’est cet abonnement qui fait partir la requête. loading passe à true, le spinner apparaît dans la barre.',
+        lang: 'typescript', code: 'protected readonly result = toSignal(\n  this.searches.pipe(switchMap((term) => this.search(term))),\n  { initialValue: IDLE },\n);\n\nprivate search(term: string): Observable<SearchResult> {\n  this.loading.set(true);\n  return this.noteApi.searchByTitle(term).pipe(/* … */);\n}' },
+      { tag: 'Service', file: 'notes/data/note-api.ts', title: 'NoteApi construit la requête',
+        text: 'Le composant ne connaît pas l’URL. NoteApi ajoute le préfixe /api et le paramètre title.',
+        lang: 'typescript', code: 'searchByTitle(title: string): Observable<Note[]> {\n  const params: Record<string, string> = title === \'\' ? {} : { title };\n  return this.http.get<Note[]>(this.notesUrl, { params });   // GET /api/notes?title=java\n}' },
+      { tag: 'Proxy', file: 'proxy.conf.json', title: 'ng serve relaie vers Spring',
+        text: 'Le navigateur a appelé localhost:4200, le serveur de développement d’Angular. Le proxy transmet à localhost:8080 en retirant /api.',
+        lang: 'json', code: '{\n  "/api": {\n    "target": "http://localhost:8080",\n    "secure": false,\n    "changeOrigin": true,\n    "pathRewrite": { "^/api": "" }\n  }\n}' },
+      { tag: 'Spring', file: 'repo brainers · NoteController.java', title: 'Le back cherche dans la base',
+        text: 'GET /notes?title=java arrive dans getAll. Le service cherche les titres qui contiennent « java », sans tenir compte de la casse. Réponse : 200 et un tableau JSON de 5 notes.',
+        lang: 'java', code: '@GetMapping("/notes")\npublic List<NoteResponse> getAll(@RequestParam(value = "title", required = false) String search) {\n    return this.service.getNotes(search);\n}\n// NoteService : repository.findByTitleContainingIgnoreCase(search)' },
+      { tag: 'RxJS', file: 'notes/components/note-search/note-search.ts', title: 'La réponse devient un état',
+        text: 'map transforme le tableau en état affichable : 10 notes au plus, et le total. finalize remet loading à false. Si la requête avait échoué, catchError aurait produit l’état error.',
+        lang: 'typescript', code: 'map((notes): SearchResult => ({\n  status: \'success\',\n  notes: notes.slice(0, SEARCH_MAX_RESULTS),\n  total: notes.length,\n})),\ncatchError(() => of<SearchResult>({ status: \'error\' })),\nfinalize(() => this.loading.set(false)),' },
+      { tag: 'Signal', file: 'notes/components/note-search/note-search.html', title: 'Le signal change, le template se redessine',
+        text: 'toSignal range ce nouvel état dans result(). Le template lit result() : Angular sait qu’il doit redessiner cette zone, et prend la branche success.',
+        lang: 'xml', code: '@let current = result();\n\n@switch (current.status) {\n  @case (\'success\') {\n    @if (current.notes.length > 0) {\n      <app-note-list [notes]="current.notes" />\n    }\n  }\n}' },
+      { tag: 'Composant', file: 'notes/components/note-list/note-list.html', title: 'NoteList dessine une ligne par note',
+        text: 'NoteList reçoit les notes par son entrée notes. @for répète un lien par note ; un clic mène à /notes/:id, sans recharger la page.',
+        lang: 'xml', code: '<ul hlmItemGroup class="gap-2">\n  @for (note of notes(); track note.id) {\n    <li>\n      <a hlmItem variant="outline" [routerLink]="[\'/notes\', note.id]">\n        <div hlmItemContent>\n          <h3 hlmItemTitle>{{ note.title }}</h3>\n          <p hlmItemDescription>{{ note.content }}</p>\n        </div>\n      </a>\n    </li>\n  }\n</ul>' }
+    ],
+    edit: [
+      { tag: 'Template', file: 'notes/pages/note-detail-page/note-detail-page.html', title: '« Modifier » change de mode',
+        text: 'Le clic appelle startEdit(), dont la seule ligne est this.mode.set(\'edit\'). Aucune requête : on change juste ce qui est affiché.',
+        lang: 'xml', code: '<button hlmBtn variant="outline" type="button" (click)="startEdit()">Modifier</button>' },
+      { tag: 'Template', file: 'notes/pages/note-detail-page/note-detail-page.html', title: 'Le formulaire remplace la carte',
+        text: 'mode() vaut maintenant \'edit\' : le template affiche le formulaire, et lui passe la note par l’entrée note.',
+        lang: 'xml', code: '@case (\'success\') {\n  @if (mode() === \'edit\') {\n    <h1 class="text-2xl font-semibold tracking-tight">Modifier la note</h1>\n    <app-note-form\n      [note]="current.note"\n      (saved)="onSaved($event)"\n      (cancelled)="backToReading()"\n    />\n  } @else { … la carte … }\n}' },
+      { tag: 'Classe', file: 'notes/components/note-form/note-form.ts', title: 'ngOnInit pré-remplit le formulaire',
+        text: 'Juste après sa création, le formulaire lit son entrée note et recopie le titre et le contenu dans ses champs.',
+        lang: 'typescript', code: 'ngOnInit(): void {\n  const note = this.note();\n  if (note) {\n    this.form.setValue({ title: note.title, content: note.content });\n  }\n}' },
+      { tag: 'Navigateur', file: 'notes/components/note-form/note-form.html', title: 'Tu modifies, les validateurs vérifient',
+        text: 'À chaque frappe, les validateurs repassent. Le bouton se désactive dès que le formulaire est invalide, et les messages apparaissent quand tu quittes un champ.',
+        lang: 'xml', code: '<textarea hlmTextarea id="note-content" formControlName="content" class="min-h-40"></textarea>\n\n<button hlmBtn type="submit" [disabled]="form.invalid || submitting()">Enregistrer</button>' },
+      { tag: 'Classe', file: 'notes/components/note-form/note-form.ts', title: 'Une note en entrée : donc PUT',
+        text: 'submit() voit qu’il a reçu une note : il appelle update() au lieu de create(). La requête PUT /api/notes/12 part au subscribe().',
+        lang: 'typescript', code: 'const note = this.note();\nconst save = note ? this.noteApi.update(note.id, request) : this.noteApi.create(request);\n\nsave.subscribe({\n  next: (savedNote) => {\n    this.submitting.set(false);\n    this.saved.emit(savedNote);\n  },\n  error: (error: HttpErrorResponse) => { /* … */ },\n});' },
+      { tag: 'Spring', file: 'repo brainers · NoteController.java', title: 'Le back enregistre',
+        text: 'PUT /notes/12 arrive dans update. Hibernate met à jour la ligne ; @UpdateTimestamp change lastUpdateAt. Réponse : 200 et la note à jour.',
+        lang: 'java', code: '@PutMapping("/notes/{id}")\npublic ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody NoteRequest noteRequest) {\n    NoteResponse noteResponse = this.service.update(id, noteRequest);\n    return ResponseEntity.ok(noteResponse);\n}' },
+      { tag: 'Classe', file: 'notes/pages/note-detail-page/note-detail-page.ts', title: 'La page range la note à jour',
+        text: 'Le formulaire a émis saved ; la page reçoit la note dans onSaved(). linkedSignal accepte la correction : pas besoin de recharger la note depuis le back.',
+        lang: 'typescript', code: 'protected readonly state = linkedSignal(() => this.loaded());\n\nprotected onSaved(note: Note): void {\n  this.state.set({ status: \'success\', note });\n  this.mode.set(\'read\');\n}' },
+      { tag: 'Template', file: 'notes/pages/note-detail-page/note-detail-page.html', title: 'La carte réapparaît, à jour',
+        text: 'mode() vaut \'read\' et state() contient la nouvelle note : la carte affiche le nouveau contenu et la nouvelle date de modification.',
+        lang: 'xml', code: '<header hlmCardHeader>\n  <h1 hlmCardTitle class="text-xl font-semibold">{{ current.note.title }}</h1>\n  <p hlmCardDescription>\n    Créée le {{ current.note.createdAt | date: "d MMM y \'à\' HH:mm" }} · Modifiée le\n    {{ current.note.lastUpdateAt | date: "d MMM y \'à\' HH:mm" }}\n  </p>\n</header>' }
+    ],
+    delete: [
+      { tag: 'Template', file: 'notes/pages/note-detail-page/note-detail-page.html', title: 'Premier clic : on demande confirmation',
+        text: '« Supprimer » ne supprime pas encore. Le mode passe à \'confirm-delete\' et le pied de la carte affiche la question, avec « Annuler » et un second « Supprimer ».',
+        lang: 'xml', code: '<footer hlmCardFooter class="justify-end gap-2">\n  @if (mode() === \'confirm-delete\') {\n    <p class="me-auto text-sm">Supprimer définitivement cette note ?</p>\n    <button hlmBtn variant="ghost" type="button" (click)="backToReading()">Annuler</button>\n    <button hlmBtn variant="destructive" type="button" (click)="deleteNote(current.note)">Supprimer</button>\n  } @else { … Modifier, Supprimer … }\n</footer>' },
+      { tag: 'Classe', file: 'notes/pages/note-detail-page/note-detail-page.ts', title: 'Confirmation : la requête part',
+        text: 'deleting passe à true : les boutons se désactivent et un spinner apparaît. La page appelle directement NoteApi, sans composant intermédiaire.',
+        lang: 'typescript', code: 'protected deleteNote(note: Note): void {\n  this.deleting.set(true);\n\n  this.noteApi.delete(note.id).subscribe({\n    next: () => this.router.navigate([\'/\']),\n    error: () => { /* étape 6 */ },\n  });\n}' },
+      { tag: 'Service', file: 'notes/data/note-api.ts', title: 'DELETE /api/notes/12',
+        text: 'Observable<void> : le back ne renvoie pas de corps. On s’abonne seulement pour savoir quand c’est fini, et si ça a échoué.',
+        lang: 'typescript', code: 'delete(id: number): Observable<void> {\n  return this.http.delete<void>(`${this.notesUrl}/${id}`);\n}' },
+      { tag: 'Spring', file: 'repo brainers · NoteController.java', title: 'Le back supprime',
+        text: 'La note est retirée de la base. Réponse : 204 No Content. Si la note n’existait plus, NoteNotFoundException donne 404.',
+        lang: 'java', code: '@DeleteMapping("/notes/{id}")\npublic ResponseEntity<?> delete(@PathVariable Long id) {\n    this.service.delete(id);\n    return ResponseEntity.noContent().build();\n}' },
+      { tag: 'Routeur', file: 'notes/pages/note-detail-page/note-detail-page.ts', title: 'Succès : retour à l’accueil',
+        text: 'router.navigate([\'/\']) change l’URL. Le routeur détruit NoteDetailPage et crée HomePage dans <router-outlet />. La note n’existe plus, sa page non plus.',
+        lang: 'typescript', code: 'next: () => this.router.navigate([\'/\']),' },
+      { tag: 'Template', file: 'notes/pages/note-detail-page/note-detail-page.html', title: 'Échec : la note reste, une alerte s’affiche',
+        text: 'En cas d’erreur, on réactive les boutons et on repasse en lecture. deleteFailed() passe à true : sous la carte, @if (deleteFailed()) affiche l’alerte « La note n’a pas été supprimée. ». La note est toujours là, l’utilisateur peut réessayer.',
+        lang: 'typescript', code: 'error: () => {\n  this.deleting.set(false);\n  this.deleteFailed.set(true);\n  this.mode.set(\'read\');\n},' }
+    ]
+  };
+  var scenario = 'search', index = 0;
+  var el = function (id) { return document.getElementById(id); };
+  function renderStep() {
+    var steps = SCENARIOS[scenario], s = steps[index];
+    el('step-tag').textContent = s.tag;
+    el('step-count').textContent = 'Étape ' + (index + 1) + ' sur ' + steps.length;
+    el('step-title').textContent = s.title;
+    el('step-text').textContent = s.text;
+    el('step-caption').textContent = s.file;
+    el('step-lang').textContent = LANG_LABEL[s.lang] || s.lang;
+    highlightInto(el('step-code'), s.code, s.lang);
+    el('step-prev').disabled = index === 0;
+    el('step-next').disabled = index === steps.length - 1;
+    var dots = el('step-dots');
+    dots.innerHTML = '';
+    steps.forEach(function (_, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = String(i + 1);
+      b.setAttribute('aria-label', 'Étape ' + (i + 1));
+      if (i === index) b.setAttribute('aria-current', 'step');
+      b.addEventListener('click', function () { index = i; renderStep(); });
+      dots.append(b);
+    });
+  }
+  document.querySelectorAll('[data-scenario]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      scenario = b.dataset.scenario; index = 0;
+      document.querySelectorAll('[data-scenario]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      renderStep();
+    });
+  });
+  el('step-prev').addEventListener('click', function () { if (index > 0) { index--; renderStep(); } });
+  el('step-next').addEventListener('click', function () { if (index < SCENARIOS[scenario].length - 1) { index++; renderStep(); } });
+  renderStep();
+
+  // 4. Le sommaire : ouvert sur grand écran, replié sur mobile, et chapitre courant surligné
+  var toc = document.getElementById('toc-details');
+  var wide = window.matchMedia('(min-width: 981px)');
+  function syncToc() { if (wide.matches) toc.open = true; }
+  if (!wide.matches) toc.open = false;
+  if (wide.addEventListener) wide.addEventListener('change', syncToc);
+  toc.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { if (!wide.matches) toc.open = false; }); });
+  var links = {};
+  toc.querySelectorAll('a').forEach(function (a) { links[a.getAttribute('href').slice(1)] = a; });
+  if ('IntersectionObserver' in window) {
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting && links[e.target.id]) {
+          Object.keys(links).forEach(function (k) { links[k].classList.toggle('current', k === e.target.id); });
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    document.querySelectorAll('.chapter').forEach(function (c) { obs.observe(c); });
+  }
+})();
+</script>
+
+</body>
+</html>

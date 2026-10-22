@@ -5,6 +5,8 @@ Angular 22 + Spartan UI (Tailwind v4), branché sur le back Spring du dossier `d
 
 👉 **Le guide complet, qui explique chaque fichier et chaque choix : [GUIDE.md](GUIDE.md).**
 
+🎓 **Tu débutes en Angular ?** Ouvre [docs/cours-angular.html](docs/cours-angular.html) dans ton navigateur : un cours complet construit sur le code de Brainers.
+
 ## Prérequis
 
 - **Node.js 24** (ou 22.22.3 minimum) : `node -v` pour vérifier. Avec nvm : `nvm install && nvm use` (lit `.nvmrc`).
