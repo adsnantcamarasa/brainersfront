@@ -1,0 +1,965 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Back-end brique par brique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,400..600&display=swap">
+<style>
+/* Mise en page : un plan de chantier. Le schéma et les tableaux prennent toute la largeur (78rem max),
+   les textes restent à environ 68 caractères. Chaque zone du schéma a sa couleur, reprise dans le tableau. */
+:root {
+  --bg: #f3f5f6;
+  --surface: #ffffff;
+  --ink: #13181c;
+  --muted: #56636b;
+  --line: #d8dfe2;
+  --accent: #0d6a70;
+  --accent-soft: #dff0f0;
+
+  --z-net: #46598c;    --z-net-soft: #e7ebf6;
+  --z-srv: #875810;    --z-srv-soft: #f7eedb;
+  --z-web: #0d6a70;    --z-web-soft: #dff0f0;
+  --z-ioc: #6b4fa0;    --z-ioc-soft: #eee8f7;
+  --z-data: #2e7a3c;   --z-data-soft: #e3f2e5;
+  --z-db: #1d5d96;     --z-db-soft: #e2edf8;
+  --z-x: #8d3b4f;      --z-x-soft: #f6e6ea;
+
+  --ok: #2e7a3c; --ok-soft: #e3f2e5;
+  --half: #875810; --half-soft: #f7eedb;
+  --map: #46598c; --map-soft: #e7ebf6;
+
+  --f-display: "Bricolage Grotesque", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1214; --surface: #141b1e; --ink: #e3e9eb; --muted: #95a3aa; --line: #263236;
+    --accent: #5cc6c9; --accent-soft: #102a2b;
+    --z-net: #a3b4ea; --z-net-soft: #1a2238; --z-srv: #e6b464; --z-srv-soft: #2c2312;
+    --z-web: #5cc6c9; --z-web-soft: #102a2b; --z-ioc: #c3aef0; --z-ioc-soft: #231b33;
+    --z-data: #82d08f; --z-data-soft: #13281a; --z-db: #8fc3f2; --z-db-soft: #13243a;
+    --z-x: #f0a3b5; --z-x-soft: #2e1820;
+    --ok: #82d08f; --ok-soft: #13281a; --half: #e6b464; --half-soft: #2c2312; --map: #a3b4ea; --map-soft: #1a2238;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1214; --surface: #141b1e; --ink: #e3e9eb; --muted: #95a3aa; --line: #263236;
+  --accent: #5cc6c9; --accent-soft: #102a2b;
+  --z-net: #a3b4ea; --z-net-soft: #1a2238; --z-srv: #e6b464; --z-srv-soft: #2c2312;
+  --z-web: #5cc6c9; --z-web-soft: #102a2b; --z-ioc: #c3aef0; --z-ioc-soft: #231b33;
+  --z-data: #82d08f; --z-data-soft: #13281a; --z-db: #8fc3f2; --z-db-soft: #13243a;
+  --z-x: #f0a3b5; --z-x-soft: #2e1820;
+  --ok: #82d08f; --ok-soft: #13281a; --half: #e6b464; --half-soft: #2c2312; --map: #a3b4ea; --map-soft: #1a2238;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 1.0625rem; line-height: 1.6; }
+.shell { max-width: 78rem; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 2.5rem 5rem; display: grid; gap: 3.5rem; }
+a { color: var(--accent); text-underline-offset: 0.18em; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3, h4 { font-family: var(--f-display); line-height: 1.15; text-wrap: balance; margin: 0; }
+p { margin: 0; }
+code { font-family: var(--f-mono); font-size: 0.82em; background: var(--bg); border: 1px solid var(--line); padding: 0.02em 0.32em; border-radius: 4px; overflow-wrap: break-word; }
+.prose { max-width: 68ch; display: grid; gap: 0.8rem; }
+.eyebrow { font-family: var(--f-mono); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+
+/* ---------- En-tête ---------- */
+.masthead { display: grid; gap: 1.3rem; }
+.masthead h1 { font-size: clamp(2.4rem, 1.4rem + 3.6vw, 3.9rem); font-weight: 760; letter-spacing: -0.025em; }
+.lede { font-size: 1.22rem; line-height: 1.55; max-width: 62ch; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+.chip { font-family: var(--f-display); font-size: 0.82rem; border: 1px solid var(--line); background: var(--surface); padding: 0.2rem 0.65rem; border-radius: 999px; color: var(--muted); }
+nav.jump { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; font-family: var(--f-display); font-size: 0.95rem; border-block: 1px solid var(--line); padding-block: 0.75rem; }
+nav.jump a { text-decoration: none; color: var(--ink); }
+nav.jump a:hover { color: var(--accent); }
+nav.jump a span { font-family: var(--f-mono); font-size: 0.72rem; color: var(--muted); margin-right: 0.35rem; }
+
+section.part { display: grid; gap: 1.3rem; scroll-margin-top: 1rem; }
+section.part > header { display: grid; gap: 0.5rem; }
+section.part h2 { font-size: clamp(1.7rem, 1.2rem + 1.6vw, 2.4rem); font-weight: 720; letter-spacing: -0.015em; }
+section.part h3 { font-size: 1.25rem; font-weight: 680; margin-top: 0.6rem; }
+
+/* ---------- Le schéma ---------- */
+.example { font-family: var(--f-mono); font-size: 0.82rem; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 0.8rem 1rem; overflow-x: auto; white-space: pre; line-height: 1.55; }
+.journey { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+.j-head { display: grid; grid-template-columns: 10.5rem minmax(0, 1fr) 17rem; gap: 1rem; padding: 0.7rem 1rem; font-family: var(--f-display); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); border-bottom: 1px solid var(--line); background: var(--bg); }
+.zone { display: grid; grid-template-columns: 10.5rem minmax(0, 1fr) 17rem; gap: 1rem; padding: 1rem; border-bottom: 1px solid var(--line); position: relative; }
+.zone:last-child { border-bottom: 0; }
+.zone + .zone::before { content: "↓"; position: absolute; top: -0.8rem; left: calc(10.5rem + 2.2rem); font-family: var(--f-mono); color: var(--muted); background: var(--surface); padding: 0 0.3rem; line-height: 1.4; font-size: 0.85rem; }
+.zone + .zone::after { content: "↑"; position: absolute; top: -0.8rem; right: 8.2rem; font-family: var(--f-mono); color: var(--muted); background: var(--surface); padding: 0 0.3rem; line-height: 1.4; font-size: 0.85rem; }
+.zlabel { display: grid; gap: 0.15rem; align-content: start; padding-left: 0.7rem; border-left: 4px solid var(--zc); }
+.zlabel b { font-family: var(--f-display); font-size: 1.05rem; color: var(--zc); }
+.zlabel small { font-family: var(--f-display); font-size: 0.8rem; color: var(--muted); line-height: 1.3; }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.55rem; align-content: start; }
+.steps li { position: relative; }
+.steps li + li::before { content: none; }
+.step { display: grid; grid-template-columns: auto 1fr; gap: 0.05rem 0.5rem; text-decoration: none; color: var(--ink); background: var(--zs); border: 1px solid transparent; border-radius: 8px; padding: 0.5rem 0.7rem; min-width: 9.5rem; max-width: 15rem; }
+.step:hover { border-color: var(--zc); }
+.step .n { grid-row: span 2; font-family: var(--f-mono); font-size: 0.72rem; color: var(--zc); font-weight: 600; padding-top: 0.15rem; }
+.step .t { font-family: var(--f-display); font-weight: 650; font-size: 0.95rem; line-height: 1.25; }
+.step .s { font-family: var(--f-display); font-size: 0.8rem; color: var(--muted); line-height: 1.3; }
+.step .b { grid-column: 2; font-family: var(--f-mono); font-size: 0.66rem; color: var(--zc); margin-top: 0.2rem; }
+.back { font-family: var(--f-display); font-size: 0.86rem; line-height: 1.45; background: var(--bg); border: 1px dashed var(--line); border-radius: 8px; padding: 0.6rem 0.75rem; align-self: start; }
+.back .lbl { display: block; margin-bottom: 0.25rem; font-family: var(--f-mono); font-size: 0.66rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--zc); }
+.back > span:last-child { display: block; margin-top: 0.35rem; }
+.back a { color: var(--zc); font-family: var(--f-mono); font-size: 0.72rem; }
+.z-net { --zc: var(--z-net); --zs: var(--z-net-soft); }
+.z-srv { --zc: var(--z-srv); --zs: var(--z-srv-soft); }
+.z-web { --zc: var(--z-web); --zs: var(--z-web-soft); }
+.z-ioc { --zc: var(--z-ioc); --zs: var(--z-ioc-soft); }
+.z-data { --zc: var(--z-data); --zs: var(--z-data-soft); }
+.z-db { --zc: var(--z-db); --zs: var(--z-db-soft); }
+.z-x { --zc: var(--z-x); --zs: var(--z-x-soft); }
+@media (max-width: 900px) {
+  .j-head { display: none; }
+  .zone { grid-template-columns: minmax(0, 1fr); gap: 0.7rem; }
+  .zone + .zone::before, .zone + .zone::after { display: none; }
+  .steps { flex-direction: column; gap: 0.9rem; }
+  .steps li + li::before { content: "↓"; position: absolute; left: 1rem; top: -0.95rem; font-family: var(--f-mono); color: var(--muted); font-size: 0.8rem; }
+  .step { max-width: none; }
+}
+.aside-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; }
+.aside-box { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 1rem 1.1rem; display: grid; gap: 0.55rem; align-content: start; }
+.aside-box h3 { margin: 0; font-size: 1.05rem; }
+.aside-box ol, .aside-box ul { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.3rem; font-size: 0.95rem; }
+.aside-box a { font-family: var(--f-mono); font-size: 0.74rem; }
+
+/* ---------- Tableaux ---------- */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-family: var(--f-display); font-size: 0.88rem; line-height: 1.45; }
+th, td { text-align: left; vertical-align: top; padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--line); }
+thead th { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 650; background: var(--bg); position: sticky; top: 0; }
+td code, th code { font-size: 0.78rem; }
+tr:last-child td { border-bottom: 0; }
+.bricks { min-width: 64rem; }
+.bricks tr.zrow th { background: var(--zs); color: var(--zc); font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; padding-block: 0.45rem; border-left: 4px solid var(--zc); }
+.bricks td.id { white-space: nowrap; }
+.bricks td.id b { display: block; font-family: var(--f-display); font-size: 0.95rem; font-weight: 680; white-space: normal; min-width: 9rem; }
+.bricks td.id .num { font-family: var(--f-mono); font-size: 0.72rem; color: var(--zc); }
+.bricks td.id small { display: block; color: var(--muted); font-size: 0.78rem; white-space: normal; margin-top: 0.25rem; }
+.bricks td.id label { display: flex; align-items: center; gap: 0.35rem; margin-top: 0.4rem; font-size: 0.75rem; color: var(--muted); cursor: pointer; }
+.bricks .k { display: block; font-family: var(--f-mono); font-size: 0.64rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin-top: 0.35rem; }
+.bricks .k:first-child { margin-top: 0; }
+.bricks tr:target td { background: var(--accent-soft); }
+.bricks tr.done td.id b { text-decoration: line-through; text-decoration-color: var(--muted); }
+.res a { font-weight: 600; }
+.tag { display: inline-block; font-family: var(--f-mono); font-size: 0.62rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.05rem 0.35rem; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); margin-left: 0.25rem; vertical-align: 1px; white-space: nowrap; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; justify-content: space-between; }
+.filters { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.fbtn { font-family: var(--f-display); font-size: 0.82rem; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 0.3rem 0.75rem; cursor: pointer; }
+.fbtn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.progress { font-family: var(--f-display); font-size: 0.9rem; color: var(--muted); }
+.progress b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* ---------- Encadrés ---------- */
+.callout { border-radius: 10px; padding: 0.95rem 1.15rem; display: grid; gap: 0.45rem; background: var(--accent-soft); max-width: 68ch; }
+.callout .lbl { font-family: var(--f-display); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); }
+.callout ul { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.3rem; }
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1rem; }
+.rules > div { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 1rem 1.1rem; display: grid; gap: 0.5rem; align-content: start; }
+.rules h3 { margin: 0; font-size: 1.02rem; }
+.rules ul, .rules ol { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.3rem; font-size: 0.95rem; }
+
+/* ---------- Phases ---------- */
+.phases { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; }
+.phase { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 1rem 1.1rem; }
+.phase .pn { font-family: var(--f-display); font-weight: 760; font-size: 2rem; line-height: 1; color: var(--accent); }
+.phase .pn small { display: block; font-family: var(--f-mono); font-size: 0.66rem; font-weight: 400; color: var(--muted); margin-top: 0.4rem; letter-spacing: 0.05em; }
+.phase .body { display: grid; gap: 0.45rem; min-width: 0; }
+.phase h3 { margin: 0; font-size: 1.15rem; }
+.phase dl { margin: 0; display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 0.3rem 0.8rem; font-size: 0.93rem; }
+.phase dt { font-family: var(--f-display); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); padding-top: 0.2rem; }
+.phase dd { margin: 0; }
+.phase dd a.bref { font-family: var(--f-mono); font-size: 0.78rem; }
+@media (max-width: 560px) { .phase { grid-template-columns: minmax(0, 1fr); } .phase dl { grid-template-columns: minmax(0, 1fr); } .phase dt { padding-top: 0.35rem; } }
+
+.verdict { display: inline-block; font-family: var(--f-display); font-size: 0.74rem; font-weight: 650; padding: 0.12rem 0.5rem; border-radius: 999px; white-space: nowrap; }
+.v-ok { background: var(--ok-soft); color: var(--ok); }
+.v-half { background: var(--half-soft); color: var(--half); }
+.v-map { background: var(--map-soft); color: var(--map); }
+.footer { color: var(--muted); font-size: 0.92rem; display: grid; gap: 0.4rem; border-top: 1px solid var(--line); padding-top: 1.2rem; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="masthead">
+    <p class="eyebrow">Parcours · devenir dev back-end en reconstruisant la chaîne à la main</p>
+    <h1>Back-end brique par brique</h1>
+    <p class="lede">Entre le clic d'un client et ta base de données, une requête traverse une vingtaine de briques. Spring Boot les cache derrière quelques annotations. Ce parcours te les fait reconstruire en Java, avec le JDK et presque rien d'autre, en recodant l'API Greenlight du livre <em>Let's Go Further</em>. À la fin, aucune annotation Spring ne sera magique : tu sauras ce qu'elle fait, parce que tu l'auras écrite.</p>
+    <div class="chips" aria-label="Le cadre">
+      <span class="chip">Java 25 (LTS)</span><span class="chip">JDK seul</span><span class="chip">+ driver JDBC PostgreSQL</span><span class="chip">+ JUnit</span><span class="chip">Fil rouge : Greenlight</span><span class="chip">28 briques · 10 phases</span>
+    </div>
+    <nav class="jump" aria-label="Sections">
+      <a href="#schema"><span>1</span>Le schéma</a>
+      <a href="#briques"><span>2</span>Les briques</a>
+      <a href="#parcours"><span>3</span>Le parcours</a>
+      <a href="#spring"><span>4</span>Spring démystifié</a>
+      <a href="#ressources"><span>5</span>Tes ressources, vérifiées</a>
+    </nav>
+  </header>
+
+  <!-- =============================== 1. SCHÉMA =============================== -->
+  <section class="part" id="schema">
+    <header>
+      <p class="eyebrow">1 · La vue d'ensemble</p>
+      <h2>Le voyage d'une requête, du client à la base et retour</h2>
+    </header>
+    <div class="prose">
+      <p>On suit une seule requête : un client crée un film dans Greenlight. Lis le schéma de haut en bas pour l'aller (colonne du milieu), puis de bas en haut pour le retour (colonne de droite). Chaque case dit seulement <strong>qui</strong> intervient et <strong>comment ça s'appelle</strong>. Le code <code>B07</code> renvoie à la brique du tableau, où se trouvent les ressources pour la recoder.</p>
+    </div>
+<div class="example" aria-label="La requête suivie">POST /v1/movies HTTP/1.1
+Host: api.greenlight.example
+Authorization: Bearer Y3QMGX3PJ3WLRL2YRTQGQ6KRHU
+Content-Type: application/json
+
+{"title": "Casablanca", "year": 1942, "runtime": "102 mins", "genres": ["drama", "romance"]}</div>
+
+    <div class="journey" role="group" aria-label="Le trajet d'une requête">
+      <div class="j-head"><span>Zone</span><span>↓ Aller : la requête descend</span><span>↑ Retour : la réponse remonte</span></div>
+
+      <div class="zone z-net">
+        <div class="zlabel"><b>Réseau</b><small>Hors de ta JVM : Internet et la machine</small></div>
+        <ol class="steps">
+          <li><a class="step" href="#b01"><span class="n">1</span><span class="t">Client</span><span class="s">curl, navigateur, appli mobile</span><span class="b">B01</span></a></li>
+          <li><a class="step" href="#b01"><span class="n">2</span><span class="t">DNS</span><span class="s">le nom devient une adresse IP</span><span class="b">B01</span></a></li>
+          <li><a class="step" href="#b01"><span class="n">3</span><span class="t">TCP</span><span class="s">ouvre une connexion fiable</span><span class="b">B01</span></a></li>
+          <li><a class="step" href="#b02"><span class="n">4</span><span class="t">TLS</span><span class="s">chiffre tout : c'est le S de HTTPS</span><span class="b">B02</span></a></li>
+          <li><a class="step" href="#b02"><span class="n">5</span><span class="t">Reverse proxy</span><span class="s">Caddy ou Nginx : déchiffre, transmet à ton serveur</span><span class="b">B02</span></a></li>
+        </ol>
+        <div class="back"><span class="lbl">↑ retour</span>Caddy rechiffre la réponse, TCP la transporte, le client la lit. <span><a href="#b02">B02</a> <a href="#b01">B01</a></span></div>
+      </div>
+
+      <div class="zone z-srv">
+        <div class="zlabel"><b>Serveur HTTP</b><small>Le rôle de Tomcat, embarqué par Spring Boot</small></div>
+        <ol class="steps">
+          <li><a class="step" href="#b03"><span class="n">6</span><span class="t">Acceptor</span><span class="s">accepte la connexion sur le port</span><span class="b">B03</span></a></li>
+          <li><a class="step" href="#b04"><span class="n">7</span><span class="t">Pool de threads</span><span class="s">un thread prend la requête en charge</span><span class="b">B04</span></a></li>
+          <li><a class="step" href="#b03"><span class="n">8</span><span class="t">Parser HTTP</span><span class="s">octets → méthode, chemin, en-têtes, corps</span><span class="b">B03</span></a></li>
+        </ol>
+        <div class="back"><span class="lbl">↑ retour</span>Écrit <code>HTTP/1.1 201 Created</code>, les en-têtes et le corps. Le thread est libéré ; la connexion reste ouverte (keep-alive). <span><a href="#b03">B03</a> <a href="#b04">B04</a></span></div>
+      </div>
+
+      <div class="zone z-web">
+        <div class="zlabel"><b>Framework web</b><small>Le rôle de Spring MVC et Spring Security</small></div>
+        <ol class="steps">
+          <li><a class="step" href="#b05"><span class="n">9</span><span class="t">Filtres</span><span class="s">identifiant de requête, logs, limite de débit, CORS, authentification</span><span class="b">B05 · B20 · B23 · B24</span></a></li>
+          <li><a class="step" href="#b07"><span class="n">10</span><span class="t">DispatcherServlet</span><span class="s">le point d'entrée unique de l'appli</span><span class="b">B07</span></a></li>
+          <li><a class="step" href="#b06"><span class="n">11</span><span class="t">Routage</span><span class="s">POST /v1/movies → MovieController.create()</span><span class="b">B06</span></a></li>
+          <li><a class="step" href="#b08"><span class="n">12</span><span class="t">Désérialisation</span><span class="s">JSON → objet Java</span><span class="b">B08</span></a></li>
+          <li><a class="step" href="#b09"><span class="n">13</span><span class="t">Validation</span><span class="s">titre obligatoire, année ≥ 1888…</span><span class="b">B09</span></a></li>
+        </ol>
+        <div class="back"><span class="lbl">↑ retour</span>Objet → JSON. Une exception ? Le gestionnaire d'erreurs la traduit en 400, 404, 409, 422, 500… Les filtres repassent en sens inverse : en-têtes CORS, métriques, log de la requête. <span><a href="#b08">B08</a> <a href="#b10">B10</a> <a href="#b05">B05</a> <a href="#b26">B26</a></span></div>
+      </div>
+
+      <div class="zone z-ioc">
+        <div class="zlabel"><b>Ton code</b><small>Assemblé au démarrage par le conteneur IoC</small></div>
+        <ol class="steps">
+          <li><a class="step" href="#b07"><span class="n">14</span><span class="t">Contrôleur</span><span class="s">traduit la requête en appel métier</span><span class="b">B07</span></a></li>
+          <li><a class="step" href="#b12"><span class="n">15</span><span class="t">Proxy @Transactional</span><span class="s">ouvre une transaction avant ta méthode</span><span class="b">B12 · B15</span></a></li>
+          <li><a class="step" href="#b11"><span class="n">16</span><span class="t">Service</span><span class="s">les règles métier</span><span class="b">B11</span></a></li>
+          <li><a class="step" href="#b17"><span class="n">17</span><span class="t">Repository</span><span class="s">objet → INSERT INTO movies …</span><span class="b">B13 · B17</span></a></li>
+        </ol>
+        <div class="back"><span class="lbl">↑ retour</span>Le service renvoie le film créé. Le proxy valide la transaction (commit), ou l'annule (rollback) si une exception est sortie. Le contrôleur choisit le statut 201 et l'en-tête <code>Location</code>. <span><a href="#b12">B12</a> <a href="#b15">B15</a></span></div>
+      </div>
+
+      <div class="zone z-data">
+        <div class="zlabel"><b>Persistance</b><small>JDBC, le pont entre Java et la base</small></div>
+        <ol class="steps">
+          <li><a class="step" href="#b14"><span class="n">18</span><span class="t">Pool de connexions</span><span class="s">prête une connexion déjà ouverte (HikariCP)</span><span class="b">B14</span></a></li>
+          <li><a class="step" href="#b13"><span class="n">19</span><span class="t">Driver JDBC</span><span class="s">envoie le SQL en protocole PostgreSQL, sur TCP</span><span class="b">B13</span></a></li>
+        </ol>
+        <div class="back"><span class="lbl">↑ retour</span>Les lignes deviennent des objets (<code>ResultSet</code> → record). La connexion retourne au pool, elle n'est pas fermée. <span><a href="#b13">B13</a> <a href="#b14">B14</a></span></div>
+      </div>
+
+      <div class="zone z-db">
+        <div class="zlabel"><b>Base de données</b><small>PostgreSQL, un autre processus</small></div>
+        <ol class="steps">
+          <li><a class="step" href="#b19"><span class="n">20</span><span class="t">Parseur, planificateur, exécuteur</span><span class="s">analyse le SQL, choisit un plan, l'exécute</span><span class="b">B19</span></a></li>
+          <li><a class="step" href="#b19"><span class="n">21</span><span class="t">Stockage</span><span class="s">écrit la ligne, met à jour les index, journalise (WAL)</span><span class="b">B19</span></a></li>
+        </ol>
+        <div class="back"><span class="lbl">↑ retour</span>Renvoie la ligne créée (<code>RETURNING id, created_at, version</code>), ou une erreur : contrainte violée, verrou, délai dépassé. <span><a href="#b19">B19</a></span></div>
+      </div>
+    </div>
+
+    <div class="aside-grid">
+      <div class="aside-box">
+        <h3>Avant la première requête : le démarrage</h3>
+        <ol>
+          <li>Lire la configuration <a href="#b26">B26</a></li>
+          <li>Appliquer les migrations SQL <a href="#b16">B16</a></li>
+          <li>Ouvrir le pool de connexions <a href="#b14">B14</a></li>
+          <li>Le conteneur IoC crée tes objets et les relie <a href="#b11">B11</a>, en les entourant de proxies si besoin <a href="#b12">B12</a></li>
+          <li>Enregistrer les routes <a href="#b06">B06</a></li>
+          <li>Ouvrir le port et attendre <a href="#b03">B03</a></li>
+        </ol>
+      </div>
+      <div class="aside-box">
+        <h3>En même temps, à côté des requêtes</h3>
+        <ul>
+          <li>Les tâches de fond : l'email de bienvenue part sans bloquer la réponse <a href="#b21">B21</a></li>
+          <li>Le cache évite de refaire un travail coûteux <a href="#b25">B25</a></li>
+          <li>Les métriques et les logs racontent ce qui se passe <a href="#b26">B26</a></li>
+          <li>Plusieurs requêtes en parallèle, donc des threads et des verrous <a href="#b04">B04</a></li>
+        </ul>
+      </div>
+      <div class="aside-box">
+        <h3>À l'arrêt : SIGTERM</h3>
+        <ol>
+          <li>Ne plus accepter de connexions</li>
+          <li>Finir les requêtes en cours</li>
+          <li>Attendre les tâches de fond</li>
+          <li>Fermer le pool, puis quitter <a href="#b22">B22</a></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============================== 2. BRIQUES =============================== -->
+  <section class="part" id="briques">
+    <header>
+      <p class="eyebrow">2 · Le tableau</p>
+      <h2>Les 28 briques, et de quoi les recoder</h2>
+    </header>
+    <div class="prose">
+      <p>Une ligne par brique, rangées par zone du schéma. Pour chacune : son nom chez Spring (ou Tomcat), les concepts Java et d'informatique que tu vas pratiquer en la codant, ce que tu codes dans Greenlight, la ressource principale, puis un complément. La ressource principale est toujours pratique : un livre qui fait coder, un chapitre ciblé, une spécification, un défi. Les vidéos de Sriniously servent d'introduction avant de coder (<a href="#ressources">voir section 5</a>).</p>
+    </div>
+
+    <div class="toolbar">
+      <div class="filters" role="group" aria-label="Filtrer par zone">
+        <button class="fbtn" type="button" data-filter="all" aria-pressed="true">Toutes</button>
+        <button class="fbtn" type="button" data-filter="net" aria-pressed="false">Réseau</button>
+        <button class="fbtn" type="button" data-filter="srv" aria-pressed="false">Serveur HTTP</button>
+        <button class="fbtn" type="button" data-filter="web" aria-pressed="false">Framework web</button>
+        <button class="fbtn" type="button" data-filter="ioc" aria-pressed="false">Conteneur</button>
+        <button class="fbtn" type="button" data-filter="data" aria-pressed="false">Persistance</button>
+        <button class="fbtn" type="button" data-filter="db" aria-pressed="false">Base</button>
+        <button class="fbtn" type="button" data-filter="x" aria-pressed="false">Transversal</button>
+      </div>
+      <p class="progress" aria-live="polite"><b id="done-count">0</b> / 28 briques faites</p>
+    </div>
+
+    <div class="table-wrap">
+      <table class="bricks">
+        <thead>
+          <tr><th style="width:15%">Brique</th><th style="width:20%">Concepts pratiqués</th><th style="width:23%">Ce que tu codes</th><th style="width:22%">Ressource principale</th><th style="width:20%">Complément</th></tr>
+        </thead>
+        <tbody>
+          <!-- Réseau -->
+          <tr class="zrow z-net" data-zone="net"><th colspan="5">Réseau</th></tr>
+          <tr id="b01" class="z-net" data-zone="net">
+            <td class="id"><span class="num">B01</span><b>Réseau, TCP et sockets</b><small>Spring : rien, c'est sous Tomcat</small></td>
+            <td><span class="k">Java</span><code>ServerSocket</code>, <code>Socket</code>, flux d'octets, try-with-resources<span class="k">Informatique</span>modèle TCP/IP, ports, poignée de main, DNS</td>
+            <td>Un serveur « echo », puis afficher la requête brute envoyée par <code>curl</code></td>
+            <td class="res"><a href="https://beej.us/guide/bgnet/">Beej's Guide to Network Programming</a><span class="tag">gratuit</span><br>ch. 1 à 6. En C, mais ce sont les mêmes appels système que sous la JVM.</td>
+            <td>Tutoriel Oracle <a href="https://docs.oracle.com/javase/tutorial/networking/sockets/index.html">All About Sockets</a>, en Java</td>
+          </tr>
+          <tr id="b02" class="z-net" data-zone="net">
+            <td class="id"><span class="num">B02</span><b>HTTPS et reverse proxy</b><small>Spring : <code>server.ssl.*</code> ; en prod, Caddy ou Nginx devant</small></td>
+            <td><span class="k">Java</span>JSSE (<code>SSLServerSocket</code>), <code>keytool</code><span class="k">Informatique</span>chiffrement symétrique et asymétrique, certificats</td>
+            <td>Ton serveur en HTTPS avec un certificat auto-signé. En prod, Caddy fait le HTTPS et te transmet la requête.</td>
+            <td class="res"><a href="https://tls13.xargs.org/">The Illustrated TLS 1.3 Connection</a><span class="tag">gratuit</span><br>Une connexion décortiquée octet par octet.</td>
+            <td><em>Let's Go Further</em> ch. 20.5 (Caddy). Ne recode jamais la cryptographie : utilise celle du JDK.</td>
+          </tr>
+
+          <!-- Serveur HTTP -->
+          <tr class="zrow z-srv" data-zone="srv"><th colspan="5">Serveur HTTP</th></tr>
+          <tr id="b03" class="z-srv" data-zone="srv">
+            <td class="id"><span class="num">B03</span><b>Serveur HTTP/1.1</b><small>Tomcat : Connector, <code>Http11Processor</code>, <code>CoyoteAdapter</code>, l'API Servlet</small></td>
+            <td><span class="k">Java</span>lecture d'octets, UTF-8, tes interfaces <code>Handler</code>, <code>Request</code>, <code>Response</code><span class="k">Informatique</span>protocole texte, machine à états, <code>Content-Length</code>, keep-alive</td>
+            <td>Lire la ligne de requête, les en-têtes, le corps ; écrire la réponse ; servir <code>GET /v1/healthcheck</code></td>
+            <td class="res"><a href="https://codecrafters.io/challenges/http-server">CodeCrafters : Build your own HTTP server</a><span class="tag">Java</span><span class="tag">payant</span><br>Étapes testées automatiquement. Les énoncés se lisent gratuitement.</td>
+            <td><a href="https://www.rfc-editor.org/rfc/rfc9112">RFC 9112</a> (format des messages) ; <em>How Tomcat Works</em> ch. 1 à 5</td>
+          </tr>
+          <tr id="b04" class="z-srv" data-zone="srv">
+            <td class="id"><span class="num">B04</span><b>Threads et pool</b><small>Tomcat : Acceptor, Poller, pool (<code>maxThreads</code>) ; Boot : <code>spring.threads.virtual.enabled</code></small></td>
+            <td><span class="k">Java</span><code>Thread</code>, <code>ExecutorService</code>, <code>BlockingQueue</code>, threads virtuels, <code>synchronized</code>, atomiques<span class="k">Informatique</span>processus et threads, verrous, I/O bloquantes</td>
+            <td>Un thread par connexion, puis ton propre pool, puis les threads virtuels. Mesure chaque version avec un outil de charge (hey, oha).</td>
+            <td class="res"><a href="https://jcip.net/">Java Concurrency in Practice</a><span class="tag">livre</span><br>ch. 1 à 8. Date de 2006, mais reste la référence sur les fondamentaux.</td>
+            <td><a href="https://pages.cs.wisc.edu/~remzi/OSTEP/">OSTEP</a>, partie Concurrency (gratuit) ; <em>Modern Concurrency in Java</em> (O'Reilly, 2025) pour les threads virtuels</td>
+          </tr>
+
+          <!-- Framework web -->
+          <tr class="zrow z-web" data-zone="web"><th colspan="5">Framework web</th></tr>
+          <tr id="b05" class="z-web" data-zone="web">
+            <td class="id"><span class="num">B05</span><b>Filtres, middlewares et contexte de requête</b><small>Spring : <code>Filter</code>, <code>OncePerRequestFilter</code>, <code>SecurityFilterChain</code>, <code>RequestContextHolder</code></small></td>
+            <td><span class="k">Java</span>interfaces fonctionnelles, lambdas, <code>ThreadLocal</code>, <code>ScopedValue</code> (Java 25)<span class="k">Informatique</span>chaîne de responsabilité, décorateur</td>
+            <td>Les middlewares <code>recoverPanic</code> (toute exception devient une 500), <code>requestId</code>, <code>logRequest</code>, et un contexte de requête lisible partout</td>
+            <td class="res"><em>Let's Go Further</em><span class="tag">livre</span><br>Dans les ch. 10, 15, 17 et 18, chaque fonction est un middleware.</td>
+            <td><a href="https://openjdk.org/jeps/506">JEP 506</a> (Scoped Values) ; vidéo Sriniously n° 10</td>
+          </tr>
+          <tr id="b06" class="z-web" data-zone="web">
+            <td class="id"><span class="num">B06</span><b>Routage</b><small>Spring : <code>HandlerMapping</code>, <code>@GetMapping</code>, <code>PathPattern</code></small></td>
+            <td><span class="k">Java</span><code>Map</code>, records, découpage de chaînes<span class="k">Informatique</span>arbre préfixe (trie, radix tree)</td>
+            <td><code>GET /v1/movies/{id}</code> ; 404 si la route n'existe pas, 405 + en-tête <code>Allow</code> si la méthode n'est pas la bonne</td>
+            <td class="res"><em>Let's Go Further</em> ch. 2.3<span class="tag">livre</span></td>
+            <td>Le README de <a href="https://github.com/julienschmidt/httprouter">httprouter</a>, qui explique son radix tree ; vidéo Sriniously n° 6</td>
+          </tr>
+          <tr id="b07" class="z-web" data-zone="web">
+            <td class="id"><span class="num">B07</span><b>Front controller et contrôleurs</b><small>Spring : <code>DispatcherServlet</code>, <code>HandlerAdapter</code>, <code>HandlerMethodArgumentResolver</code>, <code>@RestController</code></small></td>
+            <td><span class="k">Java</span>annotations <code>@Retention(RUNTIME)</code>, réflexion (<code>Method.invoke</code>, <code>Parameter</code>)<span class="k">Informatique</span>pattern Front Controller</td>
+            <td>Tes annotations <code>@Get("/v1/movies/{id}")</code>, <code>@PathParam</code>, <code>@Body</code> ; le dispatcher trouve la méthode et prépare ses arguments</td>
+            <td class="res"><a href="https://github.com/michaelliao/summer-framework">summer-framework</a>, module <code>summer-web</code><span class="tag">code Java</span></td>
+            <td>Spring Reference, <a href="https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-servlet.html">DispatcherServlet</a>, pour les vrais noms ; vidéo Sriniously n° 10</td>
+          </tr>
+          <tr id="b08" class="z-web" data-zone="web">
+            <td class="id"><span class="num">B08</span><b>JSON</b><small>Spring : <code>HttpMessageConverter</code> + Jackson <code>ObjectMapper</code></small></td>
+            <td><span class="k">Java</span>réflexion sur les records, <code>StringBuilder</code>, échappements Unicode, effacement des génériques<span class="k">Informatique</span>analyse lexicale, analyse syntaxique récursive, grammaire</td>
+            <td><code>Json.parse</code> (lexer + parser) et <code>Json.write</code> ; JSON ↔ records ; refuser les champs inconnus et les corps trop gros</td>
+            <td class="res"><a href="https://craftinginterpreters.com/scanning.html">Crafting Interpreters</a>, ch. 4 à 6<span class="tag">gratuit</span><span class="tag">Java</span></td>
+            <td><a href="https://www.rfc-editor.org/rfc/rfc8259">RFC 8259</a> + <a href="https://github.com/nst/JSONTestSuite">JSONTestSuite</a> pour éprouver ton parser ; vidéo Sriniously n° 7</td>
+          </tr>
+          <tr id="b09" class="z-web" data-zone="web">
+            <td class="id"><span class="num">B09</span><b>Validation</b><small>Spring : <code>@Valid</code>, Bean Validation (Hibernate Validator)</small></td>
+            <td><span class="k">Java</span>annotations lues par réflexion</td>
+            <td>Un validateur qui collecte toutes les erreurs, champ par champ, et répond 422</td>
+            <td class="res"><em>Let's Go Further</em> ch. 4.5<span class="tag">livre</span></td>
+            <td>Vidéo Sriniously n° 9</td>
+          </tr>
+          <tr id="b10" class="z-web" data-zone="web">
+            <td class="id"><span class="num">B10</span><b>Erreurs et design d'API</b><small>Spring : <code>@ControllerAdvice</code>, <code>@ExceptionHandler</code>, <code>ProblemDetail</code></small></td>
+            <td><span class="k">Java</span>hiérarchie d'exceptions, exceptions vérifiées ou non<span class="k">Informatique</span>sémantique HTTP, idempotence, versionnage</td>
+            <td>Une seule forme d'erreur JSON pour 400, 404, 405, 409, 413, 422, 429 et 500</td>
+            <td class="res"><em>Let's Go Further</em> ch. 3<span class="tag">livre</span> + <a href="https://opensource.zalando.com/restful-api-guidelines/">Zalando RESTful API Guidelines</a><span class="tag">gratuit</span></td>
+            <td><a href="https://www.rfc-editor.org/rfc/rfc9457">RFC 9457</a> (Problem Details) ; vidéos Sriniously n° 11 et 16</td>
+          </tr>
+
+          <!-- Conteneur -->
+          <tr class="zrow z-ioc" data-zone="ioc"><th colspan="5">Conteneur (ce qui assemble ton code)</th></tr>
+          <tr id="b11" class="z-ioc" data-zone="ioc">
+            <td class="id"><span class="num">B11</span><b>Conteneur IoC et injection de dépendances</b><small>Spring : <code>ApplicationContext</code>, <code>BeanFactory</code>, <code>@Component</code>, <code>BeanPostProcessor</code></small></td>
+            <td><span class="k">Java</span>réflexion (<code>Constructor.newInstance</code>), annotations, scan du classpath, <code>ClassLoader</code><span class="k">Informatique</span>graphe de dépendances, tri topologique, détection de cycles</td>
+            <td>Ton conteneur : il trouve les composants, les crée dans le bon ordre et injecte par constructeur</td>
+            <td class="res"><a href="https://github.com/michaelliao/summer-framework/tree/main/step-by-step">summer-framework, dossier step-by-step</a><span class="tag">code Java</span><br>De <code>resource-resolver</code> à <code>bean-post-processor</code>.</td>
+            <td>Martin Fowler, <a href="https://martinfowler.com/articles/injection.html">Inversion of Control Containers and the Dependency Injection pattern</a></td>
+          </tr>
+          <tr id="b12" class="z-ioc" data-zone="ioc">
+            <td class="id"><span class="num">B12</span><b>Proxies et AOP</b><small>Spring : AOP, <code>@Transactional</code>, <code>@Cacheable</code>, proxies JDK ou CGLIB</small></td>
+            <td><span class="k">Java</span><code>java.lang.reflect.Proxy</code>, <code>InvocationHandler</code><span class="k">Informatique</span>pattern Proxy</td>
+            <td>Un <code>@Transactional</code> maison par proxy dynamique ; un aspect qui chronomètre les services</td>
+            <td class="res">Spring Reference, <a href="https://docs.spring.io/spring-framework/reference/core/aop/proxying.html">Understanding AOP Proxies</a><span class="tag">gratuit</span><br>Dont le piège de l'auto-appel.</td>
+            <td>summer-framework, étape <code>proxy-resolver</code></td>
+          </tr>
+
+          <!-- Persistance -->
+          <tr class="zrow z-data" data-zone="data"><th colspan="5">Persistance</th></tr>
+          <tr id="b13" class="z-data" data-zone="data">
+            <td class="id"><span class="num">B13</span><b>JDBC et SQL</b><small>Spring : <code>DataSource</code>, <code>JdbcTemplate</code></small></td>
+            <td><span class="k">Java</span><code>Connection</code>, <code>PreparedStatement</code>, <code>ResultSet</code>, <code>ServiceLoader</code> (chargement du driver)<span class="k">Informatique</span>SQL, injection SQL, requêtes paramétrées</td>
+            <td>Le repository des films en SQL brut, puis un mini <code>JdbcTemplate</code> (pattern Template Method)</td>
+            <td class="res">Tutoriel Oracle <a href="https://docs.oracle.com/javase/tutorial/jdbc/basics/index.html">JDBC Basics</a><span class="tag">gratuit</span> + <em>Let's Go Further</em> ch. 5 et 7</td>
+            <td><a href="https://pgexercises.com/">PostgreSQL Exercises</a> pour pratiquer le SQL ; vidéo Sriniously n° 12</td>
+          </tr>
+          <tr id="b14" class="z-data" data-zone="data">
+            <td class="id"><span class="num">B14</span><b>Pool de connexions</b><small>Spring Boot : HikariCP par défaut</small></td>
+            <td><span class="k">Java</span><code>BlockingQueue</code>, <code>Semaphore</code>, proxy de <code>Connection</code> (son <code>close()</code> rend la connexion au pool)<span class="k">Informatique</span>ressource partagée, contention</td>
+            <td>Ton pool : taille maximale, délai d'attente, test de validité</td>
+            <td class="res">Wiki HikariCP, <a href="https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing">About Pool Sizing</a><span class="tag">gratuit</span></td>
+            <td><em>Let's Go Further</em> ch. 5.3</td>
+          </tr>
+          <tr id="b15" class="z-data" data-zone="data">
+            <td class="id"><span class="num">B15</span><b>Transactions et concurrence en base</b><small>Spring : <code>@Transactional</code>, <code>PlatformTransactionManager</code>, <code>TransactionSynchronizationManager</code></small></td>
+            <td><span class="k">Java</span><code>setAutoCommit(false)</code>, <code>commit</code>, <code>rollback</code>, <code>ThreadLocal</code><span class="k">Informatique</span>ACID, niveaux d'isolation, MVCC, verrouillage optimiste</td>
+            <td>Une transaction liée au thread ; <code>PATCH</code> avec colonne <code>version</code> → 409 ; délais de requête SQL</td>
+            <td class="res"><em>Designing Data-Intensive Applications</em>, 2e éd. (2026), chapitre « Transactions »<span class="tag">livre</span></td>
+            <td><em>Let's Go Further</em> ch. 8 ; doc PostgreSQL <a href="https://www.postgresql.org/docs/current/transaction-iso.html">Transaction Isolation</a></td>
+          </tr>
+          <tr id="b16" class="z-data" data-zone="data">
+            <td class="id"><span class="num">B16</span><b>Migrations</b><small>Spring Boot : Flyway, Liquibase</small></td>
+            <td><span class="k">Java</span><code>Files</code>, <code>MessageDigest</code> (somme de contrôle)<span class="k">Informatique</span>versionnage d'un schéma</td>
+            <td>Un programme qui applique <code>V1__create_movies.sql</code>, <code>V2__…</code> dans l'ordre et les note dans une table d'historique</td>
+            <td class="res"><em>Let's Go Further</em> ch. 6<span class="tag">livre</span></td>
+            <td>Le principe de Flyway : un fichier par version, une table qui garde la trace</td>
+          </tr>
+          <tr id="b17" class="z-data" data-zone="data">
+            <td class="id"><span class="num">B17</span><b>Mapping objet-relationnel</b><small>Spring Data JPA, Hibernate, <code>EntityManager</code></small></td>
+            <td><span class="k">Java</span>réflexion, proxies (chargement paresseux)<span class="k">Informatique</span>Data Mapper, Unit of Work, Identity Map, problème N+1</td>
+            <td>Un mapper générique <code>ResultSet</code> → record. Pas un ORM complet : assez pour voir ce qu'Hibernate ajoute.</td>
+            <td class="res">Martin Fowler, <a href="https://martinfowler.com/eaaCatalog/">catalogue de Patterns of Enterprise Application Architecture</a><span class="tag">gratuit</span></td>
+            <td>Plus tard, avec Hibernate : <em>High-Performance Java Persistence</em> (Vlad Mihalcea)</td>
+          </tr>
+          <tr id="b18" class="z-data" data-zone="data">
+            <td class="id"><span class="num">B18</span><b>Filtres, tri, pagination, recherche</b><small>Spring Data : <code>Pageable</code>, <code>Sort</code>, <code>Specification</code></small></td>
+            <td><span class="k">Java</span>query string, <code>URLDecoder</code><span class="k">Informatique</span>index, pagination par décalage ou par clé</td>
+            <td><code>GET /v1/movies?title=…&amp;genres=…&amp;sort=-year&amp;page=2</code> avec métadonnées ; liste blanche des colonnes de tri</td>
+            <td class="res"><em>Let's Go Further</em> ch. 9<span class="tag">livre</span></td>
+            <td><a href="https://use-the-index-luke.com/no-offset">Use The Index, Luke! : pagination</a> ; doc PostgreSQL <a href="https://www.postgresql.org/docs/current/textsearch.html">Full Text Search</a> ; vidéo Sriniously n° 15</td>
+          </tr>
+
+          <!-- Base -->
+          <tr class="zrow z-db" data-zone="db"><th colspan="5">Base de données</th></tr>
+          <tr id="b19" class="z-db" data-zone="db">
+            <td class="id"><span class="num">B19</span><b>L'intérieur de PostgreSQL</b><small>Côté Java : le driver pgjdbc</small></td>
+            <td><span class="k">Informatique</span>parseur SQL, planificateur, B-tree, pages, WAL, MVCC</td>
+            <td>Lire les plans (<code>EXPLAIN ANALYZE</code>) et créer les bons index. En bonus, coder une mini base.</td>
+            <td class="res"><a href="https://use-the-index-luke.com/">Use The Index, Luke!</a><span class="tag">gratuit</span><br>Les index expliqués aux développeurs.</td>
+            <td>Bonus : <a href="https://build-your-own.org/">build-your-own.org</a>, <em>Build Your Own Database</em> (en Go), ou CodeCrafters <em>Build your own SQLite</em> (en Java)</td>
+          </tr>
+
+          <!-- Transversal -->
+          <tr class="zrow z-x" data-zone="x"><th colspan="5">Transversal</th></tr>
+          <tr id="b20" class="z-x" data-zone="x">
+            <td class="id"><span class="num">B20</span><b>Limitation de débit</b><small>Spring : Bucket4j, Resilience4j, ou une passerelle</small></td>
+            <td><span class="k">Java</span><code>ConcurrentHashMap</code>, <code>synchronized</code>, <code>ScheduledExecutorService</code><span class="k">Informatique</span>algorithme du seau à jetons (token bucket)</td>
+            <td>Une limite globale, puis par adresse IP ; réponse 429</td>
+            <td class="res"><em>Let's Go Further</em> ch. 10<span class="tag">livre</span></td>
+            <td>Blog Stripe, <a href="https://stripe.com/blog/rate-limiters">Scaling your API with rate limiters</a></td>
+          </tr>
+          <tr id="b21" class="z-x" data-zone="x">
+            <td class="id"><span class="num">B21</span><b>Tâches de fond et emails</b><small>Spring : <code>@Async</code>, <code>TaskExecutor</code>, <code>@Scheduled</code>, <code>JavaMailSender</code></small></td>
+            <td><span class="k">Java</span><code>ExecutorService</code>, <code>CompletableFuture</code>, une socket pour SMTP<span class="k">Informatique</span>files de messages, idempotence</td>
+            <td>L'email de bienvenue en tâche de fond, par un mini client SMTP, testé avec Mailpit</td>
+            <td class="res"><em>Let's Go Further</em> ch. 13<span class="tag">livre</span></td>
+            <td><a href="https://www.rfc-editor.org/rfc/rfc5321">RFC 5321</a> (SMTP) ; <a href="https://mailpit.axllent.org/">Mailpit</a> ; <code>FOR UPDATE SKIP LOCKED</code> pour une file de jobs dans PostgreSQL ; vidéo Sriniously n° 14</td>
+          </tr>
+          <tr id="b22" class="z-x" data-zone="x">
+            <td class="id"><span class="num">B22</span><b>Arrêt propre</b><small>Spring Boot : arrêt gracieux (<code>server.shutdown</code>)</small></td>
+            <td><span class="k">Java</span><code>Runtime.addShutdownHook</code>, <code>ExecutorService.awaitTermination</code><span class="k">Informatique</span>signaux (SIGTERM), cycle de vie d'un processus</td>
+            <td>Ne plus accepter, finir les requêtes et les emails en cours, fermer le pool</td>
+            <td class="res"><em>Let's Go Further</em> ch. 11 et 13.5<span class="tag">livre</span></td>
+            <td>Vidéo Sriniously n° 19</td>
+          </tr>
+          <tr id="b23" class="z-x" data-zone="x">
+            <td class="id"><span class="num">B23</span><b>Authentification</b><small>Spring Security : <code>AuthenticationManager</code>, <code>PasswordEncoder</code>, <code>BearerTokenAuthenticationFilter</code></small></td>
+            <td><span class="k">Java</span><code>javax.crypto</code> (PBKDF2), <code>SecureRandom</code>, <code>MessageDigest</code>, <code>Base64</code><span class="k">Informatique</span>hachage salé, entropie, jeton opaque ou JWT</td>
+            <td>L'inscription, le mot de passe haché en PBKDF2 (sans bibliothèque), les jetons d'activation et d'authentification stockés hachés</td>
+            <td class="res"><em>API Security in Action</em>, ch. 3 à 6<span class="tag">livre</span><span class="tag">Java</span></td>
+            <td><em>Let's Go Further</em> ch. 12, 14, 15 ; OWASP <a href="https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html">Password Storage Cheat Sheet</a></td>
+          </tr>
+          <tr id="b24" class="z-x" data-zone="x">
+            <td class="id"><span class="num">B24</span><b>Autorisation et CORS</b><small>Spring Security : <code>AuthorizationFilter</code>, <code>@PreAuthorize</code>, <code>CorsFilter</code></small></td>
+            <td><span class="k">Java</span><code>enum</code>, <code>Set</code><span class="k">Informatique</span>permissions, rôles, politique de même origine</td>
+            <td>Une table de permissions (<code>movies:read</code>, <code>movies:write</code>), le middleware <code>requirePermission</code>, CORS avec requêtes de pré-vérification</td>
+            <td class="res"><em>Let's Go Further</em> ch. 16 et 17<span class="tag">livre</span></td>
+            <td><em>API Security in Action</em> ch. 8 ; MDN, <a href="https://developer.mozilla.org/fr/docs/Web/HTTP/CORS">CORS</a> (en français)</td>
+          </tr>
+          <tr id="b25" class="z-x" data-zone="x">
+            <td class="id"><span class="num">B25</span><b>Cache</b> <span class="tag">bonus</span><small>Spring : <code>@Cacheable</code>, Redis</small></td>
+            <td><span class="k">Java</span><code>ConcurrentHashMap</code>, <code>LinkedHashMap</code> (LRU)<span class="k">Informatique</span>LRU, durée de vie, invalidation</td>
+            <td><code>ETag</code> et <code>If-None-Match</code> sur les GET ; un cache en mémoire avec expiration</td>
+            <td class="res">MDN, <a href="https://developer.mozilla.org/fr/docs/Web/HTTP/Caching">Mise en cache HTTP</a><span class="tag">gratuit</span></td>
+            <td>CodeCrafters <em>Build your own Redis</em> (en Java) ; vidéo Sriniously n° 13</td>
+          </tr>
+          <tr id="b26" class="z-x" data-zone="x">
+            <td class="id"><span class="num">B26</span><b>Configuration, logs, métriques</b><small>Spring Boot : <code>application.properties</code>, <code>@Value</code>, Logback, Actuator, Micrometer</small></td>
+            <td><span class="k">Java</span><code>System.getenv</code>, <code>System.Logger</code>, <code>LongAdder</code>, <code>java.lang.management</code><span class="k">Informatique</span>observabilité</td>
+            <td>La configuration par variables d'environnement, des logs JSON (écrits par ton propre JSON), <code>GET /debug/vars</code></td>
+            <td class="res"><a href="https://12factor.net/fr/">The Twelve-Factor App</a><span class="tag">gratuit</span><span class="tag">fr</span></td>
+            <td><em>Let's Go Further</em> ch. 18 et 19 ; vidéos Sriniously n° 17 et 18</td>
+          </tr>
+          <tr id="b27" class="z-x" data-zone="x">
+            <td class="id"><span class="num">B27</span><b>Tests</b><small>Spring : <code>@SpringBootTest</code>, MockMvc</small></td>
+            <td><span class="k">Java</span>JUnit, <code>java.net.http.HttpClient</code><span class="k">Informatique</span>niveaux de tests, doublures</td>
+            <td>Les tests unitaires de chaque brique, et des tests de bout en bout qui appellent ton API en HTTP</td>
+            <td class="res"><a href="http://www.growing-object-oriented-software.com/">Growing Object-Oriented Software, Guided by Tests</a><span class="tag">livre</span><span class="tag">Java</span></td>
+            <td><a href="https://junit.org/">Guide de JUnit</a> ; vidéo Sriniously n° 26</td>
+          </tr>
+          <tr id="b28" class="z-x" data-zone="x">
+            <td class="id"><span class="num">B28</span><b>Build et déploiement</b><small>Spring Boot : jar exécutable, image Docker</small></td>
+            <td><span class="k">Java</span><code>javac</code>, <code>jar</code>, classpath, puis Maven<span class="k">Informatique</span>processus, service système, conteneur</td>
+            <td>Un jar exécutable, un <code>Dockerfile</code>, un serveur Linux avec Caddy et systemd</td>
+            <td class="res"><em>Let's Go Further</em> ch. 19 et 20<span class="tag">livre</span></td>
+            <td>Docker, <a href="https://docs.docker.com/get-started/">Get started</a> ; <a href="https://linuxcommand.org/tlcl.php">The Linux Command Line</a> (gratuit) ; vidéo Sriniously n° 30</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="progress">Coche une brique quand elle est faite : la case est gardée dans ce navigateur.</p>
+  </section>
+
+  <!-- =============================== 3. PARCOURS =============================== -->
+  <section class="part" id="parcours">
+    <header>
+      <p class="eyebrow">3 · L'ordre</p>
+      <h2>Le parcours, en dix phases</h2>
+    </header>
+    <div class="prose">
+      <p>Le fil rouge est <strong>Greenlight</strong>, l'API de films de <em>Let's Go Further</em>. Le livre construit l'API en Go avec la bibliothèque standard, le routeur httprouter et quelques petits paquets. Toi, tu lis chaque chapitre pour comprendre <em>quoi</em> faire et <em>pourquoi</em>, puis tu le recodes en Java en construisant d'abord la brique dont il a besoin. À la fin, ton API expose les mêmes routes que celle du livre :</p>
+    </div>
+    <div class="table-wrap" style="max-width: 46rem">
+      <table>
+        <thead><tr><th>Méthode</th><th>Route</th><th>Rôle</th><th>Phase</th></tr></thead>
+        <tbody>
+          <tr><td><code>GET</code></td><td><code>/v1/healthcheck</code></td><td>État et version de l'appli</td><td>1</td></tr>
+          <tr><td><code>GET</code></td><td><code>/v1/movies</code></td><td>Lister les films (filtres, tri, pages)</td><td>6</td></tr>
+          <tr><td><code>POST</code></td><td><code>/v1/movies</code></td><td>Créer un film</td><td>3, puis 5</td></tr>
+          <tr><td><code>GET</code></td><td><code>/v1/movies/:id</code></td><td>Afficher un film</td><td>3, puis 5</td></tr>
+          <tr><td><code>PATCH</code></td><td><code>/v1/movies/:id</code></td><td>Modifier un film</td><td>5</td></tr>
+          <tr><td><code>DELETE</code></td><td><code>/v1/movies/:id</code></td><td>Supprimer un film</td><td>5</td></tr>
+          <tr><td><code>POST</code></td><td><code>/v1/users</code></td><td>Inscrire un utilisateur</td><td>8</td></tr>
+          <tr><td><code>PUT</code></td><td><code>/v1/users/activated</code></td><td>Activer un compte</td><td>8</td></tr>
+          <tr><td><code>PUT</code></td><td><code>/v1/users/password</code></td><td>Changer de mot de passe</td><td>8</td></tr>
+          <tr><td><code>POST</code></td><td><code>/v1/tokens/authentication</code></td><td>Obtenir un jeton d'authentification</td><td>8</td></tr>
+          <tr><td><code>POST</code></td><td><code>/v1/tokens/password-reset</code></td><td>Obtenir un jeton de réinitialisation</td><td>8</td></tr>
+          <tr><td><code>GET</code></td><td><code>/debug/vars</code></td><td>Métriques de l'appli</td><td>9</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="rules">
+      <div>
+        <h3>Les règles du jeu</h3>
+        <ul>
+          <li><strong>Autorisé :</strong> le JDK 25, le driver JDBC de PostgreSQL et JUnit.</li>
+          <li><strong>Outils autour de ton code :</strong> PostgreSQL, <code>curl</code>, <code>psql</code>, Docker, Caddy, Mailpit et un outil de charge.</li>
+          <li><strong>Interdit jusqu'à la phase 10 :</strong> Spring, Tomcat, Jetty, Jackson, Gson, Hibernate, HikariCP, Flyway, Lombok.</li>
+          <li><strong>Jamais recodé :</strong> la cryptographie. Le JDK fournit PBKDF2, SHA-256 et <code>SecureRandom</code>.</li>
+          <li><strong>Commence sans Maven</strong> (<code>java Main.java</code> lance un programme de plusieurs fichiers depuis Java 22). Passe à Maven quand le projet grossit : c'est un outil, pas une bibliothèque.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>La méthode, pour chaque brique</h3>
+        <ol>
+          <li><strong>Comprendre :</strong> la vidéo Sriniously de la brique, ou le chapitre du livre.</li>
+          <li><strong>Spécifier :</strong> ce que la brique doit faire, la RFC si elle existe.</li>
+          <li><strong>Coder le minimum</strong> qui fait passer Greenlight à l'étape suivante.</li>
+          <li><strong>Tester</strong> avec JUnit et <code>curl</code>.</li>
+          <li><strong>Comparer :</strong> lire le code de la vraie brique (Tomcat, Jackson, HikariCP, Spring) une fois la tienne écrite. C'est là que tu apprends le plus.</li>
+        </ol>
+      </div>
+    </div>
+
+    <ol class="phases">
+      <li class="phase">
+        <div class="pn">0<small>avant</small></div>
+        <div class="body">
+          <h3>Le socle</h3>
+          <dl>
+            <dt>À maîtriser</dt><dd>Java moderne (records, <code>sealed</code>, <code>switch</code> sur motifs, lambdas, génériques), Git, la ligne de commande Linux, le SQL de base</dd>
+            <dt>Ressources</dt><dd><a href="https://dev.java/learn/">dev.java/learn</a> (officiel, gratuit), <a href="https://linuxcommand.org/tlcl.php">The Linux Command Line</a>, <a href="https://pgexercises.com/">PostgreSQL Exercises</a></dd>
+            <dt>Vidéos</dt><dd>Sriniously n° 1 et 3, pour la carte d'ensemble</dd>
+          </dl>
+        </div>
+      </li>
+      <li class="phase">
+        <div class="pn">1<small>≈ 4 sem.</small></div>
+        <div class="body">
+          <h3>Un serveur HTTP qui tient la charge</h3>
+          <dl>
+            <dt>Briques</dt><dd><a class="bref" href="#b01">B01</a> <a class="bref" href="#b02">B02</a> <a class="bref" href="#b03">B03</a> <a class="bref" href="#b04">B04</a></dd>
+            <dt>Livre</dt><dd><em>Let's Go Further</em> ch. 1 et 2</dd>
+            <dt>Livrable</dt><dd><code>GET /v1/healthcheck</code> répond en JSON (écrit à la main pour l'instant), servi par ton serveur, sur un pool de threads puis des threads virtuels</dd>
+            <dt>Vidéos</dt><dd>n° 5 (HTTP), n° 22 (concurrence)</dd>
+          </dl>
+        </div>
+      </li>
+      <li class="phase">
+        <div class="pn">2<small>≈ 3 sem.</small></div>
+        <div class="body">
+          <h3>Ton JSON</h3>
+          <dl>
+            <dt>Briques</dt><dd><a class="bref" href="#b08">B08</a></dd>
+            <dt>Livre</dt><dd><em>Let's Go Further</em> ch. 3 et 4</dd>
+            <dt>Livrable</dt><dd>Les réponses enveloppées (<code>{"movie": …}</code>), les erreurs en JSON, un décodage strict : JSON mal formé, champs inconnus, corps trop gros</dd>
+            <dt>Vidéos</dt><dd>n° 7</dd>
+          </dl>
+        </div>
+      </li>
+      <li class="phase">
+        <div class="pn">3<small>≈ 4 sem.</small></div>
+        <div class="body">
+          <h3>Ton mini-framework web</h3>
+          <dl>
+            <dt>Briques</dt><dd><a class="bref" href="#b05">B05</a> <a class="bref" href="#b06">B06</a> <a class="bref" href="#b07">B07</a> <a class="bref" href="#b09">B09</a> <a class="bref" href="#b10">B10</a></dd>
+            <dt>Livre</dt><dd><em>Let's Go Further</em> ch. 2.3, 3.6, 4.5</dd>
+            <dt>Livrable</dt><dd>Les routes des films, avec un stockage en mémoire pour l'instant ; validation, erreurs uniformes, middleware <code>recoverPanic</code></dd>
+            <dt>Vidéos</dt><dd>n° 6, 9, 10, 11, 16</dd>
+          </dl>
+        </div>
+      </li>
+      <li class="phase">
+        <div class="pn">4<small>≈ 3 sem.</small></div>
+        <div class="body">
+          <h3>Ton conteneur</h3>
+          <dl>
+            <dt>Briques</dt><dd><a class="bref" href="#b11">B11</a> <a class="bref" href="#b12">B12</a></dd>
+            <dt>Code à suivre</dt><dd>summer-framework, dossier <code>step-by-step</code>, dans l'ordre de ses étapes</dd>
+            <dt>Livrable</dt><dd>Greenlight assemblé par ton conteneur au lieu de <code>new</code> écrits à la main ; un aspect qui chronomètre chaque service</dd>
+          </dl>
+        </div>
+      </li>
+      <li class="phase">
+        <div class="pn">5<small>≈ 5 sem.</small></div>
+        <div class="body">
+          <h3>Les données</h3>
+          <dl>
+            <dt>Briques</dt><dd><a class="bref" href="#b13">B13</a> <a class="bref" href="#b14">B14</a> <a class="bref" href="#b15">B15</a> <a class="bref" href="#b16">B16</a> <a class="bref" href="#b17">B17</a></dd>
+            <dt>Livre</dt><dd><em>Let's Go Further</em> ch. 5 à 8</dd>
+            <dt>Livrable</dt><dd>Le CRUD des films sur PostgreSQL, la modification partielle (<code>PATCH</code>), le verrouillage optimiste, les délais de requête SQL, ton <code>@Transactional</code></dd>
+            <dt>Vidéos</dt><dd>n° 12</dd>
+          </dl>
+        </div>
+      </li>
+      <li class="phase">
+        <div class="pn">6<small>≈ 2 sem.</small></div>
+        <div class="body">
+          <h3>Les listes</h3>
+          <dl>
+            <dt>Briques</dt><dd><a class="bref" href="#b18">B18</a> <a class="bref" href="#b19">B19</a></dd>
+            <dt>Livre</dt><dd><em>Let's Go Further</em> ch. 9</dd>
+            <dt>Livrable</dt><dd><code>GET /v1/movies</code> filtré, trié, paginé, avec recherche plein texte ; les index vérifiés avec <code>EXPLAIN ANALYZE</code></dd>
+            <dt>Vidéos</dt><dd>n° 15</dd>
+          </dl>
+        </div>
+      </li>
+      <li class="phase">
+        <div class="pn">7<small>≈ 2 sem.</small></div>
+        <div class="body">
+          <h3>La robustesse</h3>
+          <dl>
+            <dt>Briques</dt><dd><a class="bref" href="#b20">B20</a> <a class="bref" href="#b22">B22</a></dd>
+            <dt>Livre</dt><dd><em>Let's Go Further</em> ch. 10 et 11</dd>
+            <dt>Livrable</dt><dd>Une limite de débit par adresse IP, un arrêt propre sur SIGTERM</dd>
+            <dt>Vidéos</dt><dd>n° 19</dd>
+          </dl>
+        </div>
+      </li>
+      <li class="phase">
+        <div class="pn">8<small>≈ 5 sem.</small></div>
+        <div class="body">
+          <h3>Les utilisateurs et la sécurité</h3>
+          <dl>
+            <dt>Briques</dt><dd><a class="bref" href="#b21">B21</a> <a class="bref" href="#b23">B23</a> <a class="bref" href="#b24">B24</a></dd>
+            <dt>Livres</dt><dd><em>Let's Go Further</em> ch. 12 à 17 ; <em>API Security in Action</em> ch. 3 à 8 en parallèle</dd>
+            <dt>Livrable</dt><dd>L'inscription, l'email d'activation en tâche de fond, les jetons, l'authentification, les permissions, CORS</dd>
+            <dt>Vidéos</dt><dd>n° 8, 14, 20</dd>
+          </dl>
+        </div>
+      </li>
+      <li class="phase">
+        <div class="pn">9<small>≈ 3 sem.</small></div>
+        <div class="body">
+          <h3>La production</h3>
+          <dl>
+            <dt>Briques</dt><dd><a class="bref" href="#b26">B26</a> <a class="bref" href="#b27">B27</a> <a class="bref" href="#b28">B28</a>, et <a class="bref" href="#b02">B02</a> pour de vrai</dd>
+            <dt>Livre</dt><dd><em>Let's Go Further</em> ch. 18 à 20</dd>
+            <dt>Livrable</dt><dd>Les métriques sur <code>/debug/vars</code>, des logs JSON, un jar, l'API déployée sur un serveur Linux derrière Caddy, en HTTPS</dd>
+            <dt>Vidéos</dt><dd>n° 17, 18, 26, 27, 30</dd>
+          </dl>
+        </div>
+      </li>
+      <li class="phase">
+        <div class="pn">10<small>≈ 4 sem.</small></div>
+        <div class="body">
+          <h3>Le même avec Spring Boot</h3>
+          <dl>
+            <dt>Toutes les briques</dt><dd>Chaque brique a maintenant son équivalent Spring : <a href="#spring">voir la section 4</a></dd>
+            <dt>Ressources</dt><dd>Les <a href="https://spring.io/guides">guides officiels de Spring</a> (courts et pratiques), la Spring Reference, et summer-framework pour relire comment c'est fait</dd>
+            <dt>Livrable</dt><dd>Greenlight réécrit en Spring Boot. Pour chaque brique, note la classe Spring qui la remplace et ce qu'elle fait de plus que la tienne.</dd>
+          </dl>
+        </div>
+      </li>
+      <li class="phase">
+        <div class="pn">+<small>bonus</small></div>
+        <div class="body">
+          <h3>Aller au fond</h3>
+          <dl>
+            <dt>Au choix</dt><dd>Un clone de Redis (CodeCrafters, en Java) <a class="bref" href="#b25">B25</a> ; une mini base de données avec un B-tree <a class="bref" href="#b19">B19</a> ; un driver qui parle lui-même le <a href="https://www.postgresql.org/docs/current/protocol.html">protocole de PostgreSQL</a>, pour te passer du dernier driver autorisé</dd>
+            <dt>Vidéos</dt><dd>n° 13 (cache), 21 (montée en charge), 23 et 24 (stockage objet), 25 (temps réel), 28 (OpenAPI), 29 (webhooks)</dd>
+          </dl>
+        </div>
+      </li>
+    </ol>
+    <div class="callout">
+      <p class="lbl">Les durées</p>
+      <p>Ce sont des ordres de grandeur, à environ 8 heures par semaine : huit à neuf mois au total. Elles varient beaucoup d'une personne à l'autre. Ne saute pas une phase pour aller plus vite : chaque phase utilise les briques des précédentes.</p>
+    </div>
+  </section>
+
+  <!-- =============================== 4. SPRING =============================== -->
+  <section class="part" id="spring">
+    <header>
+      <p class="eyebrow">4 · Le lien avec Spring</p>
+      <h2>Spring démystifié</h2>
+    </header>
+    <div class="prose">
+      <p>Chaque mot de Spring que tu croises au travail correspond à une brique que tu auras codée, et à un concept Java précis. Garde ce tableau sous la main pendant la phase 10.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Dans Spring</th><th>Ce que c'est vraiment</th><th>Ta brique</th><th>Le concept Java derrière</th></tr></thead>
+        <tbody>
+          <tr><td>Tomcat embarqué</td><td>Une socket qui écoute, un pool de threads, un parser HTTP</td><td><a href="#b03">B03</a> <a href="#b04">B04</a></td><td><code>ServerSocket</code>, <code>ExecutorService</code></td></tr>
+          <tr><td><code>DispatcherServlet</code></td><td>Un point d'entrée unique qui choisit la méthode à appeler</td><td><a href="#b07">B07</a></td><td>Interfaces, réflexion</td></tr>
+          <tr><td><code>@GetMapping("/movies/{id}")</code></td><td>Une ligne dans une table de routage, remplie au démarrage</td><td><a href="#b06">B06</a></td><td>Annotations lues par réflexion</td></tr>
+          <tr><td><code>@RequestBody</code>, <code>ObjectMapper</code></td><td>Un parser JSON et du remplissage d'objets par réflexion</td><td><a href="#b08">B08</a></td><td>Réflexion sur les records</td></tr>
+          <tr><td><code>@Valid</code>, <code>@NotBlank</code></td><td>Des annotations vérifiées avant d'appeler ta méthode</td><td><a href="#b09">B09</a></td><td>Annotations, réflexion</td></tr>
+          <tr><td><code>@ControllerAdvice</code></td><td>Un <code>try</code>/<code>catch</code> central qui traduit les exceptions en statuts HTTP</td><td><a href="#b10">B10</a></td><td>Hiérarchie d'exceptions</td></tr>
+          <tr><td><code>@Component</code>, injection par constructeur</td><td>Un conteneur qui fait les <code>new</code> à ta place, dans le bon ordre</td><td><a href="#b11">B11</a></td><td><code>Constructor.newInstance</code></td></tr>
+          <tr><td>Auto-configuration de Spring Boot</td><td>Du code qui crée des objets si une classe est présente sur le classpath</td><td><a href="#b11">B11</a></td><td><code>ClassLoader</code>, conditions</td></tr>
+          <tr><td><code>@Transactional</code></td><td>Un proxy qui ouvre la transaction avant ta méthode et la valide ou l'annule après</td><td><a href="#b12">B12</a> <a href="#b15">B15</a></td><td><code>Proxy</code>, <code>ThreadLocal</code></td></tr>
+          <tr><td><code>HikariDataSource</code></td><td>Une file de connexions déjà ouvertes</td><td><a href="#b14">B14</a></td><td><code>BlockingQueue</code></td></tr>
+          <tr><td><code>JdbcTemplate</code></td><td>Une méthode qui écrit pour toi le <code>try</code>/<code>finally</code> de JDBC</td><td><a href="#b13">B13</a></td><td>Template Method, lambdas</td></tr>
+          <tr><td><code>JpaRepository</code></td><td>Une interface qu'un proxy implémente au démarrage</td><td><a href="#b17">B17</a></td><td><code>Proxy</code>, réflexion</td></tr>
+          <tr><td><code>SecurityFilterChain</code></td><td>Une chaîne de filtres placée avant le <code>DispatcherServlet</code></td><td><a href="#b05">B05</a> <a href="#b23">B23</a> <a href="#b24">B24</a></td><td>Chaîne de responsabilité</td></tr>
+          <tr><td><code>SecurityContextHolder</code></td><td>L'utilisateur courant, rangé dans le thread de la requête</td><td><a href="#b05">B05</a> <a href="#b23">B23</a></td><td><code>ThreadLocal</code></td></tr>
+          <tr><td><code>@Async</code></td><td>Un <code>ExecutorService</code> qui exécute la méthode ailleurs</td><td><a href="#b21">B21</a></td><td><code>ExecutorService</code></td></tr>
+          <tr><td><code>application.properties</code>, <code>@Value</code></td><td>Des clés et des valeurs lues au démarrage</td><td><a href="#b26">B26</a></td><td><code>Properties</code>, <code>System.getenv</code></td></tr>
+          <tr><td>Actuator, Micrometer</td><td>Des compteurs exposés en JSON</td><td><a href="#b26">B26</a></td><td><code>LongAdder</code>, JMX</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- =============================== 5. RESSOURCES =============================== -->
+  <section class="part" id="ressources">
+    <header>
+      <p class="eyebrow">5 · Vérification</p>
+      <h2>Tes ressources, vérifiées</h2>
+    </header>
+    <div class="prose">
+      <p>Pour chaque ressource que tu m'as donnée, j'ai regardé ce qu'elle contient vraiment, si elle fait coder, et où elle a sa place dans le parcours. Vérifié le 22 octobre 2026.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th style="width:18%">Ressource</th><th style="width:34%">Ce qu'elle est vraiment</th><th style="width:12%">Verdict</th><th style="width:36%">Comment t'en servir</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><a href="https://lets-go-further.alexedwards.net/">Let's Go Further</a><br><small>Alex Edwards</small></td>
+            <td>Version 1.27.1 pour Go 1.27, mise à jour le 3 octobre 2026. 22 chapitres, 614 pages, 59,95 $. Construit Greenlight, une API JSON de films sur PostgreSQL, avec la bibliothèque standard, httprouter et quelques petits paquets. Les chapitres 1 à 3 sont lisibles gratuitement en ligne.</td>
+            <td><span class="verdict v-ok">Fil rouge</span></td>
+            <td>Le meilleur fil rouge possible : il couvre presque toutes les briques, dans un ordre qui marche. Lis un chapitre pour le quoi et le pourquoi, puis recode-le en Java. Le Go se lit facilement quand on connaît Java.</td>
+          </tr>
+          <tr>
+            <td>How Tomcat Works<br><small>Budi Kurniawan, Paul Deck</small></td>
+            <td>Paru en 2004, sur Tomcat 4 et 5. Construit un conteneur de servlets pas à pas, en Java : un serveur web simple, un conteneur simple, le connecteur, puis les composants de Tomcat (lifecycle, loader, sessions, sécurité…).</td>
+            <td><span class="verdict v-half">En partie</span></td>
+            <td>Les chapitres 1 à 5 sont exactement la brique B03. Le reste, en survol, pour le vocabulaire. Le Java est d'avant les génériques et NIO : pour les noms actuels, la doc <a href="https://tomcat.apache.org/tomcat-11.0-doc/architecture/overview.html">Architecture de Tomcat 11</a>. Le livre neuf est difficile à trouver.</td>
+          </tr>
+          <tr>
+            <td><a href="https://craftinginterpreters.com/">Crafting Interpreters</a><br><small>Robert Nystrom</small></td>
+            <td>Gratuit en ligne. Construit un langage de programmation complet ; sa première moitié est en Java.</td>
+            <td><span class="verdict v-half">En partie</span></td>
+            <td>Pertinent pour ton parser JSON, mais seulement les ch. 4 (analyse lexicale), 5 (représenter le code) et 6 (analyse syntaxique). Le reste construit un interpréteur : passionnant, mais hors de ce parcours.</td>
+          </tr>
+          <tr>
+            <td><a href="https://www.manning.com/books/api-security-in-action">API Security in Action</a><br><small>Neil Madden, Manning</small></td>
+            <td>Paru en novembre 2020. Exemples en Java 11+, sur le micro-framework Spark (Jetty). 13 chapitres : développement sûr, sécurisation de l'API Natter, cookies de session, jetons, JWT, OAuth 2, contrôle d'accès, puis microservices et IoT.</td>
+            <td><span class="verdict v-ok">À garder</span></td>
+            <td>La meilleure ressource pratique sur la sécurité d'une API en Java. Fais les ch. 3 à 8 pendant la phase 8. Les ch. 9 à 13 (Macaroons, Kubernetes, IoT) sont facultatifs.</td>
+          </tr>
+          <tr>
+            <td><a href="https://github.com/michaelliao/summer-framework">summer-framework</a><br><small>Michael Liao</small></td>
+            <td>« A minimal Spring framework » en Java 21, licence GPL-3.0. Modules : conteneur IoC, AOP, <code>JdbcTemplate</code> et transactions, web (Servlet 6.0), boot. Le dossier <code>step-by-step</code> contient 11 étapes. Le tutoriel associé est en chinois. Le framework s'appuie sur Tomcat, Jackson, HikariCP et ByteBuddy.</td>
+            <td><span class="verdict v-ok">À garder</span></td>
+            <td>Le bon plan pour B07, B11, B12 et le <code>JdbcTemplate</code>. Suis l'ordre des 11 étapes, lis le code, puis écris le tien. Le tutoriel se lit avec la traduction du navigateur. Comme il délègue le serveur, le JSON et le pool à des bibliothèques, toi tu brancheras tes propres briques à la place.</td>
+          </tr>
+          <tr>
+            <td><a href="https://www.youtube.com/playlist?list=PLui3EUkuMTPgZcV0QhQrOcwMPcBCcd_Q1">Backend from first principles</a><br><small>Sriniously, YouTube</small></td>
+            <td>31 vidéos, 34,9 heures au total, de 4 minutes à 2 h 50. Indépendant du langage : HTTP, routage, sérialisation, authentification, validation, couches, design REST, PostgreSQL, cache, files de tâches, recherche, erreurs, configuration, logs, arrêt propre, sécurité, montée en charge, concurrence, tests, Twelve-Factor, OpenAPI, webhooks, DevOps.</td>
+            <td><span class="verdict v-map">Carte</span></td>
+            <td>Excellente carte des concepts, mais elle ne fait pas coder. Ne la regarde pas d'une traite : regarde la vidéo d'une brique juste avant de la coder. Les numéros sont indiqués dans le tableau et les phases.</td>
+          </tr>
+          <tr>
+            <td><a href="https://www.boot.dev/paths/backend-python-golang">boot.dev, parcours Back-end</a><br><small>Python et Go</small></td>
+            <td>17 cours et 8 projets, environ 12 mois. Abonnement payant ; les premiers chapitres de chaque cours sont en démo gratuite. Ordre : Linux, Git, programmation objet et fonctionnelle, structures de données, gestion mémoire, Go, clients HTTP, SQL, serveurs HTTP, CDN, Docker, sécurité web, pub/sub.</td>
+            <td><span class="verdict v-map">Inspiration</span></td>
+            <td>Bonne liste de contrôle pour ne rien oublier, surtout pour le socle (phase 0). Ce n'est pas du Java : ne le suis pas en parallèle.</td>
+          </tr>
+          <tr>
+            <td>Threads et concurrence</td>
+            <td>Pas une ressource, un sujet. Trois choix vérifiés : <em>Java Concurrency in Practice</em> (2006, la référence), <a href="https://pages.cs.wisc.edu/~remzi/OSTEP/">OSTEP</a> (gratuit, côté système), <em>Modern Concurrency in Java</em> d'A N M Bazlur Rahman (O'Reilly, septembre 2025 : threads virtuels, structured concurrency, scoped values).</td>
+            <td><span class="verdict v-ok">À garder</span></td>
+            <td>JCIP ch. 1 à 8 pendant la phase 1, puis <em>Modern Concurrency in Java</em> pour les threads virtuels. Les Scoped Values sont finales depuis Java 25 ; la structured concurrency y est encore en preview.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Ce que j'ai ajouté, et pourquoi</h3>
+    <div class="aside-grid">
+      <div class="aside-box">
+        <h3>Pour coder</h3>
+        <ul>
+          <li><strong>CodeCrafters</strong> : le serveur HTTP en Java, avec des tests automatiques à chaque étape. Payant, mais les énoncés sont lisibles gratuitement : tu peux suivre les étapes sans abonnement.</li>
+          <li><strong>JSONTestSuite</strong> : des centaines de cas limites pour savoir si ton parser JSON tient vraiment.</li>
+          <li><strong>build-your-own.org</strong> : des livres courts qui font tout reconstruire (base de données, Redis, serveur web), dans d'autres langages que Java.</li>
+        </ul>
+      </div>
+      <div class="aside-box">
+        <h3>Pour comprendre en profondeur</h3>
+        <ul>
+          <li><strong>Designing Data-Intensive Applications</strong>, 2e édition (2026) : la référence sur les transactions et les données. À lire par chapitres ciblés.</li>
+          <li><strong>Use The Index, Luke!</strong> : les index et la pagination, gratuit et écrit pour les développeurs.</li>
+          <li><strong>Le wiki HikariCP</strong> : pourquoi un petit pool est plus rapide qu'un gros.</li>
+        </ul>
+      </div>
+      <div class="aside-box">
+        <h3>Pour les bons réflexes</h3>
+        <ul>
+          <li><strong>OWASP Cheat Sheets</strong> : comment stocker un mot de passe, gérer une session.</li>
+          <li><strong>The Twelve-Factor App</strong> : douze règles pour une appli qui se déploie bien, en français.</li>
+          <li><strong>Zalando RESTful API Guidelines</strong> : un guide de design d'API utilisé en production.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>Document rédigé le 22 octobre 2026. Les versions, prix et contenus des ressources ont été vérifiés à cette date sur leurs pages officielles, ou à défaut sur des pages tierces : ils peuvent évoluer.</p>
+    <p>Les durées des phases sont des estimations, pas des mesures.</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var rows = Array.prototype.slice.call(document.querySelectorAll('.bricks tbody tr'));
+  var brickRows = rows.filter(function (r) { return r.id; });
+
+  // Filtre par zone
+  document.querySelectorAll('.fbtn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var f = btn.dataset.filter;
+      document.querySelectorAll('.fbtn').forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
+      rows.forEach(function (r) { r.hidden = f !== 'all' && r.dataset.zone !== f; });
+    });
+  });
+
+  // Un clic sur une case du schéma doit montrer la ligne, même si un filtre la cache
+  window.addEventListener('hashchange', function () {
+    var target = document.getElementById(location.hash.slice(1));
+    if (target && target.hidden) {
+      document.querySelector('.fbtn[data-filter="all"]').click();
+      target.scrollIntoView();
+    }
+  });
+
+  // Briques faites, gardées dans ce navigateur
+  var KEY = 'parcours-backend-java:faites';
+  var done = {};
+  try { done = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { done = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} }
+  function count() {
+    var n = brickRows.filter(function (r) { return done[r.id]; }).length;
+    document.getElementById('done-count').textContent = String(n);
+  }
+  brickRows.forEach(function (r) {
+    var cell = r.querySelector('td.id');
+    var label = document.createElement('label');
+    var box = document.createElement('input');
+    box.type = 'checkbox';
+    box.id = 'fait-' + r.id;
+    box.checked = !!done[r.id];
+    r.classList.toggle('done', box.checked);
+    box.addEventListener('change', function () {
+      if (box.checked) { done[r.id] = true; } else { delete done[r.id]; }
+      r.classList.toggle('done', box.checked);
+      save();
+      count();
+    });
+    label.append(box, document.createTextNode('Faite'));
+    cell.append(label);
+  });
+  count();
+})();
+</script>
+</body>
+</html>
